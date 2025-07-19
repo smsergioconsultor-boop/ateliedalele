@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Admin - Ateliê da Lelê</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rose-pastel': '#FDF2F8',
+                        'rose-light': '#FCE7F3',
+                        'rose-medium': '#F9A8D4',
+                        'rose-dark': '#EC4899',
+                        'beige': '#F5F5DC',
+                        'gold': '#FFD700',
+                        'cream': '#FFF8DC'
+                    },
+                    fontFamily: {
+                        'cursive': ['Dancing Script', 'cursive'],
+                        'elegant': ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-rose-pastel via-rose-light to-beige min-h-screen flex items-center justify-center">
+    <div class="max-w-2xl w-full mx-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-cursive text-rose-medium mb-4">Ateliê da Lelê</h1>
+                <p class="text-xl text-gray-600">Painel Administrativo</p>
+            </div>
+            
+            <!-- Admin Features -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-rose-pastel rounded-lg p-6 text-center hover:bg-rose-light transition-colors duration-300">
+                    <i class="fas fa-box text-3xl text-rose-medium mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Gerenciar Produtos</h3>
+                    <p class="text-gray-600 text-sm mb-4">Adicione, edite ou remova produtos do site</p>
+                    <a href="admin/dashboard.html#products" class="bg-rose-medium text-white px-4 py-2 rounded-lg hover:bg-rose-dark transition-colors duration-300 text-sm">
+                        Acessar
+                    </a>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-6 text-center hover:bg-blue-100 transition-colors duration-300">
+                    <i class="fas fa-images text-3xl text-blue-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Upload de Imagens</h3>
+                    <p class="text-gray-600 text-sm mb-4">Faça upload e gerencie as imagens do site</p>
+                    <a href="admin/dashboard.html#images" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300 text-sm">
+                        Acessar
+                    </a>
+                </div>
+                
+                <div class="bg-green-50 rounded-lg p-6 text-center hover:bg-green-100 transition-colors duration-300">
+                    <i class="fas fa-comments text-3xl text-green-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Depoimentos</h3>
+                    <p class="text-gray-600 text-sm mb-4">Gerencie os depoimentos dos clientes</p>
+                    <a href="admin/dashboard.html#testimonials" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-300 text-sm">
+                        Acessar
+                    </a>
+                </div>
+                
+                <div class="bg-purple-50 rounded-lg p-6 text-center hover:bg-purple-100 transition-colors duration-300">
+                    <i class="fas fa-cog text-3xl text-purple-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Configurações</h3>
+                    <p class="text-gray-600 text-sm mb-4">Configure informações do site</p>
+                    <a href="admin/dashboard.html#settings" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors duration-300 text-sm">
+                        Acessar
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Login Button -->
+            <div class="text-center">
+                <a href="admin/login.html" class="bg-rose-medium text-white px-8 py-4 rounded-lg font-semibold hover:bg-rose-dark transition-all duration-300 hover:scale-105 inline-flex items-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Acessar Painel Admin
+                </a>
+            </div>
+            
+            <!-- Demo Info -->
+            <div class="mt-8 bg-gray-50 rounded-lg p-4 text-center">
+                <p class="text-sm text-gray-600 mb-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Credenciais de demonstração:
+                </p>
+                <p class="text-xs text-gray-500">
+                    <strong>Usuário:</strong> admin | <strong>Senha:</strong> admin123
+                </p>
+            </div>
+            
+            <!-- Back to Site -->
+            <div class="text-center mt-6">
+                <a href="index.html" class="text-sm text-gray-500 hover:text-rose-medium transition-colors duration-300">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Voltar ao site
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

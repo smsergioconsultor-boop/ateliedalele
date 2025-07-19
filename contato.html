@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contato - Ateliê da Lelê | Entre em Contato Conosco</title>
+    <meta name="description" content="Entre em contato com o Ateliê da Lelê. Formulário de contato, WhatsApp e informações para pedidos personalizados.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rose-pastel': '#FDF2F8',
+                        'rose-light': '#FCE7F3',
+                        'rose-medium': '#F9A8D4',
+                        'beige': '#F5F5DC',
+                        'gold': '#FFD700',
+                        'cream': '#FFF8DC'
+                    },
+                    fontFamily: {
+                        'cursive': ['Dancing Script', 'cursive'],
+                        'elegant': ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-rose-pastel font-sans">
+    <!-- WhatsApp Button Fixed -->
+    <a href="https://wa.me/5511999999999?text=Olá! Gostaria de falar com o Ateliê da Lelê" 
+       target="_blank" 
+       class="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 z-50 hover:scale-110">
+        <i class="fab fa-whatsapp text-2xl"></i>
+    </a>
+
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl md:text-3xl font-cursive text-rose-medium font-bold">
+                        Ateliê da Lelê
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Home</a>
+                    <a href="loja.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Loja</a>
+                    <a href="sobre.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Sobre</a>
+                    <a href="portfolio.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Portfólio</a>
+                    <a href="contato.html" class="text-rose-medium font-semibold">Contato</a>
+                </div>
+                
+                <div class="hidden md:flex space-x-4">
+                    <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                       class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                       class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
+                        <i class="fas fa-shopping-bag text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="py-20 bg-gradient-to-br from-rose-pastel via-rose-light to-beige">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-6xl font-cursive text-rose-medium mb-6">
+                Entre em Contato
+            </h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                Tem alguma dúvida ou quer fazer um pedido personalizado? 
+                Estamos aqui para ajudar e criar algo especial para você!
+            </p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Contact Form -->
+                <div>
+                    <h2 class="text-3xl font-cursive text-rose-medium mb-8">Envie uma Mensagem</h2>
+                    <form class="space-y-6" id="contact-form">
+                        <div>
+                            <label for="name" class="block text-gray-700 font-semibold mb-2">Nome Completo *</label>
+                            <input type="text" id="name" name="name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300">
+                        </div>
+                        
+                        <div>
+                            <label for="email" class="block text-gray-700 font-semibold mb-2">E-mail *</label>
+                            <input type="email" id="email" name="email" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300">
+                        </div>
+                        
+                        <div>
+                            <label for="phone" class="block text-gray-700 font-semibold mb-2">Telefone</label>
+                            <input type="tel" id="phone" name="phone"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300">
+                        </div>
+                        
+                        <div>
+                            <label for="subject" class="block text-gray-700 font-semibold mb-2">Assunto *</label>
+                            <select id="subject" name="subject" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300">
+                                <option value="">Selecione um assunto</option>
+                                <option value="orcamento">Solicitar Orçamento</option>
+                                <option value="duvida">Dúvida sobre Produtos</option>
+                                <option value="personalizado">Álbum Personalizado</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="message" class="block text-gray-700 font-semibold mb-2">Mensagem *</label>
+                            <textarea id="message" name="message" rows="5" required
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300"
+                                      placeholder="Conte-nos sobre seu projeto ou dúvida..."></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-rose-medium text-white py-4 rounded-lg font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Enviar Mensagem
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-cursive text-rose-medium mb-8">Informações de Contato</h2>
+                        <p class="text-gray-600 text-lg mb-8">
+                            Escolha a forma que preferir para entrar em contato conosco. 
+                            Estamos sempre disponíveis para ajudar!
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- WhatsApp -->
+                        <div class="flex items-center p-4 bg-green-50 rounded-lg">
+                            <div class="bg-green-500 text-white p-3 rounded-full mr-4">
+                                <i class="fab fa-whatsapp text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">WhatsApp</h3>
+                                <p class="text-gray-600">(11) 99999-9999</p>
+                                <a href="https://wa.me/5511999999999" target="_blank" 
+                                   class="text-green-600 hover:text-green-700 font-semibold text-sm">
+                                    Enviar mensagem →
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Instagram -->
+                        <div class="flex items-center p-4 bg-pink-50 rounded-lg">
+                            <div class="bg-gradient-to-r from-pink-400 to-purple-500 text-white p-3 rounded-full mr-4">
+                                <i class="fab fa-instagram text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Instagram</h3>
+                                <p class="text-gray-600">@ateliedalelê</p>
+                                <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                                   class="text-pink-600 hover:text-pink-700 font-semibold text-sm">
+                                    Seguir no Instagram →
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Shopee -->
+                        <div class="flex items-center p-4 bg-orange-50 rounded-lg">
+                            <div class="bg-orange-500 text-white p-3 rounded-full mr-4">
+                                <i class="fas fa-shopping-bag text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Shopee</h3>
+                                <p class="text-gray-600">Ateliê da Lelê</p>
+                                <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                                   class="text-orange-600 hover:text-orange-700 font-semibold text-sm">
+                                    Ver produtos →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Business Hours -->
+                    <div class="bg-rose-pastel rounded-2xl p-6">
+                        <h3 class="text-xl font-elegant text-rose-medium mb-4">Horário de Atendimento</h3>
+                        <div class="space-y-2 text-gray-700">
+                            <div class="flex justify-between">
+                                <span>Segunda a Sexta:</span>
+                                <span>9h às 18h</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Sábado:</span>
+                                <span>9h às 14h</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Domingo:</span>
+                                <span>Fechado</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-4">
+                            * Resposta em até 24 horas em dias úteis
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 bg-rose-light">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-4">
+                    Perguntas Frequentes
+                </h2>
+                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                    Respostas para as dúvidas mais comuns sobre nossos produtos e serviços.
+                </p>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- FAQ Item 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg">
+                    <h3 class="text-xl font-elegant text-gray-800 mb-3">Como funciona o processo de criação de um álbum personalizado?</h3>
+                    <p class="text-gray-600">
+                        Primeiro conversamos sobre suas memórias e preferências, depois criamos um layout personalizado, 
+                        escolhemos materiais e cores, e finalmente montamos cada página com muito carinho. 
+                        O processo leva de 7 a 15 dias dependendo da complexidade.
+                    </p>
+                </div>
+                
+                <!-- FAQ Item 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg">
+                    <h3 class="text-xl font-elegant text-gray-800 mb-3">Vocês fazem envio para todo o Brasil?</h3>
+                    <p class="text-gray-600">
+                        Sim! Fazemos envio para todo o Brasil através dos Correios ou transportadoras. 
+                        O frete é calculado de acordo com o peso e localização. 
+                        Compras acima de R$ 100,00 ganham frete grátis!
+                    </p>
+                </div>
+                
+                <!-- FAQ Item 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg">
+                    <h3 class="text-xl font-elegant text-gray-800 mb-3">Posso enviar minhas fotos digitalmente?</h3>
+                    <p class="text-gray-600">
+                        Sim! Você pode enviar suas fotos por WhatsApp, e-mail ou compartilhar via Google Drive. 
+                        Recomendamos fotos em boa qualidade (mínimo 1MB cada) para garantir o melhor resultado.
+                    </p>
+                </div>
+                
+                <!-- FAQ Item 4 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg">
+                    <h3 class="text-xl font-elegant text-gray-800 mb-3">Qual a diferença entre os kits de scrapbook?</h3>
+                    <p class="text-gray-600">
+                        O Kit Iniciante é ideal para quem está começando, com materiais básicos. 
+                        O Kit Avançado inclui ferramentas profissionais e materiais de maior qualidade. 
+                        Ambos vêm com instruções detalhadas para você criar seus próprios álbuns.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-gradient-to-br from-rose-pastel via-rose-light to-beige">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-6">
+                Pronto para Começar?
+            </h2>
+            <p class="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">
+                Entre em contato conosco e vamos criar juntos algo especial para suas memórias!
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://wa.me/5511999999999?text=Olá! Gostaria de fazer um pedido personalizado" target="_blank" 
+                   class="bg-green-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-green-600 transition-all duration-300 hover:scale-105">
+                    <i class="fab fa-whatsapp mr-2"></i>
+                    Falar no WhatsApp
+                </a>
+                <a href="loja.html" 
+                   class="bg-rose-medium text-white px-8 py-4 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
+                    <i class="fas fa-shopping-bag mr-2"></i>
+                    Ver Produtos
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-rose-medium text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <h3 class="text-2xl font-cursive mb-4">Ateliê da Lelê</h3>
+                    <p class="text-white/80 mb-4">
+                        Transformando memórias em arte através do scrapbook artesanal. 
+                        Cada detalhe é feito com amor e carinho.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                           class="text-white/80 hover:text-white transition-colors duration-300">
+                            <i class="fab fa-instagram text-2xl"></i>
+                        </a>
+                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                           class="text-white/80 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-shopping-bag text-2xl"></i>
+                        </a>
+                        <a href="https://wa.me/5511999999999" target="_blank" 
+                           class="text-white/80 hover:text-white transition-colors duration-300">
+                            <i class="fab fa-whatsapp text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Links Rápidos</h4>
+                    <ul class="space-y-2">
+                        <li><a href="index.html" class="text-white/80 hover:text-white transition-colors duration-300">Home</a></li>
+                        <li><a href="loja.html" class="text-white/80 hover:text-white transition-colors duration-300">Loja</a></li>
+                        <li><a href="sobre.html" class="text-white/80 hover:text-white transition-colors duration-300">Sobre</a></li>
+                        <li><a href="portfolio.html" class="text-white/80 hover:text-white transition-colors duration-300">Portfólio</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contato</h4>
+                    <ul class="space-y-2">
+                        <li class="text-white/80">WhatsApp: (11) 99999-9999</li>
+                        <li class="text-white/80">Instagram: @ateliedalelê</li>
+                        <li class="text-white/80">Shopee: Ateliê da Lelê</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/20 mt-8 pt-8 text-center">
+                <p class="text-white/80">
+                    © 2024 Ateliê da Lelê. Todos os direitos reservados. 
+                    Feito com <i class="fas fa-heart text-red-400"></i> e muito carinho.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Contact form submission
+        const contactForm = document.getElementById('contact-form');
+        
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const name = formData.get('name');
+            const email = formData.get('email');
+            const subject = formData.get('subject');
+            const message = formData.get('message');
+            
+            // Simple validation
+            if (!name || !email || !subject || !message) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            // Here you would typically send the form data to your backend
+            // For now, we'll just show a success message
+            alert(`Obrigada pelo contato, ${name}! Entraremos em contato em breve através do e-mail ${email}.`);
+            
+            // Reset form
+            this.reset();
+        });
+        
+        // Form field focus effects
+        const formInputs = document.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-rose-medium');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-rose-medium');
+            });
+        });
+    </script>
+</body>
+</html> 

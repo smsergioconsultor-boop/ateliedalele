@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ateliê da Lelê - Scrapbook Artesanal e Produtos Personalizados</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Transformando memórias em arte através do scrapbook artesanal. Álbuns de memórias personalizados, papelaria criativa e produtos artesanais feitos com amor. Encontre produtos únicos na Shopee!">
+    <meta name="keywords" content="scrapbook artesanal, álbum de memórias personalizado, papelaria criativa, ateliê da lelê, scrapbook brasil, álbum de casamento, scrapbook baby, kit scrapbook">
+    <meta name="author" content="Ateliê da Lelê">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ateliedalelê.com/">
+    <meta property="og:title" content="Ateliê da Lelê - Scrapbook Artesanal e Produtos Personalizados">
+    <meta property="og:description" content="Transformando memórias em arte através do scrapbook artesanal. Álbuns de memórias personalizados feitos com amor.">
+    <meta property="og:image" content="https://ateliedalelê.com/images/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://ateliedalelê.com/">
+    <meta property="twitter:title" content="Ateliê da Lelê - Scrapbook Artesanal">
+    <meta property="twitter:description" content="Transformando memórias em arte através do scrapbook artesanal.">
+    <meta property="twitter:image" content="https://ateliedalelê.com/images/og-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rose-pastel': '#FDF2F8',
+                        'rose-light': '#FCE7F3',
+                        'rose-medium': '#F9A8D4',
+                        'rose-dark': '#EC4899',
+                        'beige': '#F5F5DC',
+                        'gold': '#FFD700',
+                        'cream': '#FFF8DC'
+                    },
+                    fontFamily: {
+                        'cursive': ['Dancing Script', 'cursive'],
+                        'elegant': ['Playfair Display', 'serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-in': 'slideIn 0.5s ease-out',
+                        'bounce-slow': 'bounce 2s infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+</head>
+<body class="bg-rose-pastel font-sans">
+    <!-- WhatsApp Button Fixed with Tooltip -->
+    <div class="fixed bottom-6 right-6 z-50 group">
+        <a href="https://wa.me/5511999999999?text=Olá! Gostaria de saber mais sobre os produtos do Ateliê da Lelê" 
+           target="_blank" 
+           class="bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 hover:scale-110 block">
+            <i class="fab fa-whatsapp text-2xl"></i>
+        </a>
+        <!-- Tooltip -->
+        <div class="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            Fale Conosco
+            <div class="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <h1 class="text-2xl md:text-3xl font-cursive text-rose-medium font-bold">
+                        Ateliê da Lelê
+                    </h1>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="text-rose-medium font-semibold">Home</a>
+                    <a href="loja.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Loja</a>
+                    <a href="sobre.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Sobre</a>
+                    <a href="portfolio.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Portfólio</a>
+                    <a href="contato.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Contato</a>
+                </div>
+                
+                <!-- Social Icons -->
+                <div class="hidden md:flex space-x-4">
+                    <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                       class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                       class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
+                        <i class="fas fa-shopping-bag text-xl"></i>
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 hover:text-rose-medium">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <div class="flex flex-col space-y-4">
+                    <a href="index.html" class="text-rose-medium font-semibold">Home</a>
+                    <a href="loja.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Loja</a>
+                    <a href="sobre.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Sobre</a>
+                    <a href="portfolio.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Portfólio</a>
+                    <a href="contato.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Contato</a>
+                    <div class="flex space-x-4 pt-2">
+                        <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                           class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                           class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
+                            <i class="fas fa-shopping-bag text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Carousel -->
+    <section class="relative min-h-screen overflow-hidden">
+        <div id="carousel" class="relative h-screen">
+            <!-- Slide 1 -->
+            <div class="carousel-slide absolute inset-0 bg-gradient-to-br from-rose-pastel via-rose-light to-beige flex items-center justify-center transition-opacity duration-700">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+                    <div class="animate-fade-in">
+                        <h1 class="text-4xl md:text-6xl lg:text-7xl font-cursive text-rose-medium mb-6">
+                            Transformando memórias em arte
+                        </h1>
+                        <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                            Cada página é uma história, cada detalhe é feito com amor. 
+                            Descubra a magia do scrapbook artesanal.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                               class="bg-rose-medium text-white px-8 py-4 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
+                                <i class="fas fa-shopping-bag mr-2"></i>
+                                Ver na Shopee
+                            </a>
+                            <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                               class="bg-gradient-to-r from-pink-400 to-purple-500 text-white px-8 py-4 rounded-full font-semibold hover:from-pink-500 hover:to-purple-600 transition-all duration-300 hover:scale-105">
+                                <i class="fab fa-instagram mr-2"></i>
+                                Instagram
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="carousel-slide absolute inset-0 bg-gradient-to-br from-beige via-rose-light to-rose-pastel flex items-center justify-center transition-opacity duration-700 opacity-0">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+                    <div class="animate-fade-in">
+                        <h1 class="text-4xl md:text-6xl lg:text-7xl font-cursive text-rose-medium mb-6">
+                            Produtos únicos e personalizados
+                        </h1>
+                        <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                            Álbuns de casamento, scrapbooks para bebês e kits completos. 
+                            Tudo feito artesanalmente com muito carinho.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <a href="loja.html" 
+                               class="bg-rose-medium text-white px-8 py-4 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
+                                <i class="fas fa-heart mr-2"></i>
+                                Ver Produtos
+                            </a>
+                            <a href="portfolio.html" 
+                               class="bg-gradient-to-r from-pink-400 to-purple-500 text-white px-8 py-4 rounded-full font-semibold hover:from-pink-500 hover:to-purple-600 transition-all duration-300 hover:scale-105">
+                                <i class="fas fa-images mr-2"></i>
+                                Portfólio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="carousel-slide absolute inset-0 bg-gradient-to-br from-rose-light via-rose-pastel to-beige flex items-center justify-center transition-opacity duration-700 opacity-0">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+                    <div class="animate-fade-in">
+                        <h1 class="text-4xl md:text-6xl lg:text-7xl font-cursive text-rose-medium mb-6">
+                            Feito com amor e dedicação
+                        </h1>
+                        <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                            Conheça a história da Galega e Nicole, artesãs apaixonadas 
+                            que transformam sonhos em realidade.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <a href="sobre.html" 
+                               class="bg-rose-medium text-white px-8 py-4 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
+                                <i class="fas fa-users mr-2"></i>
+                                Nossa História
+                            </a>
+                            <a href="contato.html" 
+                               class="bg-gradient-to-r from-pink-400 to-purple-500 text-white px-8 py-4 rounded-full font-semibold hover:from-pink-500 hover:to-purple-600 transition-all duration-300 hover:scale-105">
+                                <i class="fas fa-envelope mr-2"></i>
+                                Fale Conosco
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carousel Navigation -->
+            <button id="prev-btn" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 text-rose-medium p-3 rounded-full shadow-lg hover:bg-white transition-all duration-300 z-20">
+                <i class="fas fa-chevron-left text-xl"></i>
+            </button>
+            <button id="next-btn" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 text-rose-medium p-3 rounded-full shadow-lg hover:bg-white transition-all duration-300 z-20">
+                <i class="fas fa-chevron-right text-xl"></i>
+            </button>
+
+            <!-- Carousel Indicators -->
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-3 z-20">
+                <button class="carousel-indicator w-3 h-3 bg-white/80 rounded-full transition-all duration-300 hover:bg-white" data-slide="0"></button>
+                <button class="carousel-indicator w-3 h-3 bg-white/50 rounded-full transition-all duration-300 hover:bg-white" data-slide="1"></button>
+                <button class="carousel-indicator w-3 h-3 bg-white/50 rounded-full transition-all duration-300 hover:bg-white" data-slide="2"></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-4">
+                    Produtos em Destaque
+                </h2>
+                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                    Cada peça é única e feita especialmente para você. 
+                    Descubra nossa coleção de álbuns de memórias personalizados.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Product 1 -->
+                <div class="bg-rose-pastel rounded-2xl p-6 hover:scale-105 transition-all duration-300 shadow-lg group">
+                    <div class="bg-gradient-to-br from-rose-light to-rose-medium rounded-xl h-64 mb-4 flex items-center justify-center overflow-hidden">
+                        <div class="text-center">
+                            <i class="fas fa-heart text-6xl text-white mb-4"></i>
+                            <p class="text-white font-semibold">Álbum de Casamento</p>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-elegant text-gray-800 mb-2">Álbum de Casamento</h3>
+                    <p class="text-gray-600 mb-4">Álbum personalizado com detalhes em renda e flores secas</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-cursive text-rose-medium">R$ 89,90</span>
+                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                           class="bg-rose-medium text-white px-4 py-2 rounded-full text-sm hover:bg-rose-medium/90 transition-colors duration-300 group-hover:scale-105">
+                            Ver na Shopee
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Product 2 -->
+                <div class="bg-rose-pastel rounded-2xl p-6 hover:scale-105 transition-all duration-300 shadow-lg group">
+                    <div class="bg-gradient-to-br from-blue-200 to-blue-400 rounded-xl h-64 mb-4 flex items-center justify-center overflow-hidden">
+                        <div class="text-center">
+                            <i class="fas fa-baby text-6xl text-white mb-4"></i>
+                            <p class="text-white font-semibold">Scrapbook Baby</p>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-elegant text-gray-800 mb-2">Scrapbook Baby</h3>
+                    <p class="text-gray-600 mb-4">Álbum para registrar os primeiros momentos do bebê</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-cursive text-rose-medium">R$ 75,00</span>
+                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                           class="bg-rose-medium text-white px-4 py-2 rounded-full text-sm hover:bg-rose-medium/90 transition-colors duration-300 group-hover:scale-105">
+                            Ver na Shopee
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Product 3 -->
+                <div class="bg-rose-pastel rounded-2xl p-6 hover:scale-105 transition-all duration-300 shadow-lg group">
+                    <div class="bg-gradient-to-br from-green-200 to-green-400 rounded-xl h-64 mb-4 flex items-center justify-center overflow-hidden">
+                        <div class="text-center">
+                            <i class="fas fa-palette text-6xl text-white mb-4"></i>
+                            <p class="text-white font-semibold">Kit Scrapbook</p>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-elegant text-gray-800 mb-2">Kit Scrapbook</h3>
+                    <p class="text-gray-600 mb-4">Kit completo com papéis, adesivos e acessórios</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-cursive text-rose-medium">R$ 45,00</span>
+                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                           class="bg-rose-medium text-white px-4 py-2 rounded-full text-sm hover:bg-rose-medium/90 transition-colors duration-300 group-hover:scale-105">
+                            Ver na Shopee
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="loja.html" class="bg-rose-medium text-white px-8 py-4 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
+                    Ver Todos os Produtos
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-20 bg-rose-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-4">
+                    O que nossos clientes dizem
+                </h2>
+                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                    Cada cliente é especial para nós. Veja alguns depoimentos sobre nosso trabalho artesanal.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Testimonial 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-rose-medium rounded-full flex items-center justify-center text-white font-bold mr-4">
+                            M
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Maria Silva</h4>
+                            <div class="flex text-gold">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">
+                        "O álbum de casamento ficou perfeito! Cada detalhe foi feito com muito carinho. 
+                        Recomendo demais o trabalho da Galega e Nicole!"
+                    </p>
+                </div>
+                
+                <!-- Testimonial 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-rose-medium rounded-full flex items-center justify-center text-white font-bold mr-4">
+                            A
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Ana Costa</h4>
+                            <div class="flex text-gold">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">
+                        "Comprei o kit scrapbook e adorei! Os materiais são de ótima qualidade e 
+                        as instruções são super claras. Já estou fazendo meu segundo álbum!"
+                    </p>
+                </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-rose-medium rounded-full flex items-center justify-center text-white font-bold mr-4">
+                            C
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Carla Santos</h4>
+                            <div class="flex text-gold">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">
+                        "O scrapbook do meu bebê ficou lindo! Cada página conta uma história 
+                        e os detalhes são incríveis. Super recomendo o Ateliê da Lelê!"
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-rose-medium text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <h3 class="text-2xl font-cursive mb-4">Ateliê da Lelê</h3>
+                    <p class="text-white/80 mb-4">
+                        Transformando memórias em arte através do scrapbook artesanal. 
+                        Cada detalhe é feito com amor e carinho.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
+                           class="text-white/80 hover:text-white transition-colors duration-300 hover:scale-110">
+                            <i class="fab fa-instagram text-2xl"></i>
+                        </a>
+                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
+                           class="text-white/80 hover:text-white transition-colors duration-300 hover:scale-110">
+                            <i class="fas fa-shopping-bag text-2xl"></i>
+                        </a>
+                        <a href="https://wa.me/5511999999999" target="_blank" 
+                           class="text-white/80 hover:text-white transition-colors duration-300 hover:scale-110">
+                            <i class="fab fa-whatsapp text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Links Rápidos</h4>
+                    <ul class="space-y-2">
+                        <li><a href="index.html" class="text-white/80 hover:text-white transition-colors duration-300">Home</a></li>
+                        <li><a href="loja.html" class="text-white/80 hover:text-white transition-colors duration-300">Loja</a></li>
+                        <li><a href="sobre.html" class="text-white/80 hover:text-white transition-colors duration-300">Sobre</a></li>
+                        <li><a href="portfolio.html" class="text-white/80 hover:text-white transition-colors duration-300">Portfólio</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contato</h4>
+                    <ul class="space-y-2">
+                        <li class="text-white/80">WhatsApp: (11) 99999-9999</li>
+                        <li class="text-white/80">Instagram: @ateliedalelê</li>
+                        <li class="text-white/80">Shopee: Ateliê da Lelê</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/20 mt-8 pt-8 text-center">
+                <p class="text-white/80">
+                    © 2025 Ateliê da Lelê. Todos os direitos reservados. 
+                    Feito com <i class="fas fa-heart text-red-400"></i> e muito carinho.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Carousel functionality
+        const slides = document.querySelectorAll('.carousel-slide');
+        const indicators = document.querySelectorAll('.carousel-indicator');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        let currentSlide = 0;
+        
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.style.opacity = i === index ? '1' : '0';
+            });
+            
+            indicators.forEach((indicator, i) => {
+                if (i === index) {
+                    indicator.classList.remove('bg-white/50');
+                    indicator.classList.add('bg-white/80');
+                } else {
+                    indicator.classList.remove('bg-white/80');
+                    indicator.classList.add('bg-white/50');
+                }
+            });
+        }
+        
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+        }
+        
+        // Event listeners
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+        
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => {
+                currentSlide = index;
+                showSlide(currentSlide);
+            });
+        });
+        
+        // Auto-advance carousel
+        setInterval(nextSlide, 5000);
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
