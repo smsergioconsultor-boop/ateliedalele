@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Ateliê da Lelê</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rose-pastel': '#FDF2F8',
+                        'rose-light': '#FCE7F3',
+                        'rose-medium': '#F9A8D4',
+                        'rose-dark': '#EC4899',
+                        'beige': '#F5F5DC',
+                        'gold': '#FFD700',
+                        'cream': '#FFF8DC'
+                    },
+                    fontFamily: {
+                        'cursive': ['Dancing Script', 'cursive'],
+                        'elegant': ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-rose-pastel via-rose-light to-beige min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full mx-4">
+        <!-- Login Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-cursive text-rose-medium mb-2">Ateliê da Lelê</h1>
+                <p class="text-gray-600">Painel Administrativo</p>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2"></i>Usuário
+                    </label>
+                    <input type="text" id="username" name="username" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300"
+                           placeholder="Digite seu usuário">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2"></i>Senha
+                    </label>
+                    <input type="password" id="password" name="password" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent transition-all duration-300"
+                           placeholder="Digite sua senha">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="remember" class="rounded border-gray-300 text-rose-medium focus:ring-rose-medium">
+                        <span class="ml-2 text-sm text-gray-600">Lembrar de mim</span>
+                    </label>
+                    <a href="#" class="text-sm text-rose-medium hover:text-rose-dark transition-colors duration-300">
+                        Esqueceu a senha?
+                    </a>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-rose-medium text-white py-3 px-6 rounded-lg font-semibold hover:bg-rose-dark transition-all duration-300 hover:scale-105">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Entrar
+                </button>
+            </form>
+            
+            <!-- Back to Site -->
+            <div class="text-center mt-6">
+                <a href="index.html" class="text-sm text-gray-500 hover:text-rose-medium transition-colors duration-300">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Voltar ao site
+                </a>
+            </div>
+        </div>
+        
+        <!-- Demo Credentials -->
+        <div class="mt-6 bg-white/80 backdrop-blur-sm rounded-lg p-4 text-center">
+            <p class="text-sm text-gray-600 mb-2">
+                <i class="fas fa-info-circle mr-1"></i>
+                Credenciais de demonstração:
+            </p>
+            <p class="text-xs text-gray-500">
+                <strong>Usuário:</strong> admin<br>
+                <strong>Senha:</strong> admin123
+            </p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple authentication (in real app, this would be server-side)
+            if (username === 'admin' && password === 'admin123') {
+                // Store login state
+                localStorage.setItem('adminLoggedIn', 'true');
+                localStorage.setItem('adminUser', username);
+                
+                // Redirect to dashboard
+                window.location.href = 'admin-dashboard.html';
+            } else {
+                alert('Usuário ou senha incorretos!');
+            }
+        });
+        
+        // Check if already logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            window.location.href = 'admin-dashboard.html';
+        }
+    </script>
+</body>
+</html> 
