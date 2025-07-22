@@ -450,6 +450,9 @@
         // Set admin user name
         document.getElementById('adminUser').textContent = localStorage.getItem('adminUser') || 'Admin';
 
+        // Initialize products from localStorage
+        loadProductsFromStorage();
+
         // Navigation
         function showSection(sectionId) {
             // Hide all sections
@@ -667,8 +670,9 @@
                     image: formData.get('productImage')
                 };
                 
-                // Simulate adding product (in real app, this would save to database)
+                // Add product to localStorage and list
                 addProductToList(productData);
+                saveProductToStorage(productData);
                 closeModal();
                 showSuccessMessage('Produto adicionado com sucesso!');
             });
@@ -685,14 +689,19 @@
             const tableBody = document.querySelector('#products table tbody');
             const newRow = document.createElement('tr');
             newRow.className = 'bg-white border-b';
+            newRow.setAttribute('data-product-id', productData.id || 'default');
             newRow.innerHTML = `
                 <td class="px-6 py-4 font-medium text-gray-900">${productData.name}</td>
                 <td class="px-6 py-4">R$ ${parseFloat(productData.price).toFixed(2).replace('.', ',')}</td>
                 <td class="px-6 py-4">${getCategoryName(productData.category)}</td>
                 <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Ativo</span></td>
                 <td class="px-6 py-4">
-                    <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-                    <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                    <button onclick="editProduct(${productData.id || 'null'})" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteProduct(${productData.id || 'null'}, this)" class="text-red-600 hover:text-red-900" title="Remover">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             `;
             tableBody.appendChild(newRow);
@@ -722,6 +731,66 @@
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+
+        // localStorage functions for products
+        function saveProductToStorage(productData) {
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            productData.id = Date.now(); // Generate unique ID
+            products.push(productData);
+            localStorage.setItem('atelieProducts', JSON.stringify(products));
+        }
+
+        function loadProductsFromStorage() {
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const tableBody = document.querySelector('#products table tbody');
+            
+            // Clear existing products (except the default ones)
+            const defaultProducts = ['Álbum de Casamento', 'Scrapbook Baby', 'Kit Scrapbook'];
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const productName = row.querySelector('td:first-child').textContent;
+                if (!defaultProducts.includes(productName)) {
+                    row.remove();
+                }
+            });
+            
+            // Add products from localStorage
+            products.forEach(product => {
+                addProductToList(product);
+            });
+        }
+
+        function removeProductFromStorage(productId) {
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            products = products.filter(product => product.id !== productId);
+            localStorage.setItem('atelieProducts', JSON.stringify(products));
+        }
+
+        function deleteProduct(productId, button) {
+            if (productId === 'null') {
+                if (confirm('Tem certeza que deseja remover este produto?')) {
+                    button.closest('tr').remove();
+                    showSuccessMessage('Produto removido com sucesso!');
+                }
+                return;
+            }
+
+            if (confirm('Tem certeza que deseja remover este produto?')) {
+                removeProductFromStorage(productId);
+                button.closest('tr').remove();
+                showSuccessMessage('Produto removido com sucesso!');
+            }
+        }
+
+        function editProduct(productId) {
+            if (productId === 'null') {
+                alert('Produtos padrão não podem ser editados. Adicione um novo produto para editar.');
+                return;
+            }
+            
+            // For now, just show a message. In a real app, this would open an edit form
+            alert('Funcionalidade de edição será implementada em breve!');
         }
 
         function showAddTestimonialForm() {
