@@ -481,9 +481,112 @@
         document.getElementById('imageUpload').addEventListener('change', function(e) {
             const files = e.target.files;
             if (files.length > 0) {
-                alert(`${files.length} imagem(s) selecionada(s)! Em um sistema real, essas imagens seriam enviadas para o servidor.`);
+                handleImageUpload(files);
             }
         });
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.border-dashed');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('border-rose-medium', 'bg-rose-pastel');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-rose-medium', 'bg-rose-pastel');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-rose-medium', 'bg-rose-pastel');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleImageUpload(files);
+                }
+            });
+        }
+
+        function handleImageUpload(files) {
+            const imageGallery = document.querySelector('#images .grid');
+            const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            
+            if (validFiles.length === 0) {
+                showErrorMessage('Nenhuma imagem válida selecionada!');
+                return;
+            }
+
+            validFiles.forEach(file => {
+                if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    showErrorMessage(`Arquivo ${file.name} é muito grande! Máximo 5MB.`);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    addImageToGallery(e.target.result, file.name);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            showSuccessMessage(`${validFiles.length} imagem(s) adicionada(s) com sucesso!`);
+        }
+
+        function addImageToGallery(imageSrc, fileName) {
+            const imageGallery = document.querySelector('#images .grid');
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'relative group';
+            imageDiv.innerHTML = `
+                <img src="${imageSrc}" alt="${fileName}" class="w-full h-32 object-cover rounded-lg">
+                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                    <div class="flex space-x-2">
+                        <button onclick="downloadImage('${imageSrc}', '${fileName}')" class="text-white hover:text-blue-400 transition-colors duration-300" title="Download">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button onclick="removeImage(this)" class="text-white hover:text-red-400 transition-colors duration-300" title="Remover">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg truncate">
+                    ${fileName}
+                </div>
+            `;
+            imageGallery.appendChild(imageDiv);
+        }
+
+        function downloadImage(imageSrc, fileName) {
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function removeImage(button) {
+            if (confirm('Tem certeza que deseja remover esta imagem?')) {
+                button.closest('.relative').remove();
+                showSuccessMessage('Imagem removida com sucesso!');
+            }
+        }
+
+        function showErrorMessage(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    ${message}
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
 
         // Form handlers
         function showAddProductForm() {
