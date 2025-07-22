@@ -450,8 +450,9 @@
         // Set admin user name
         document.getElementById('adminUser').textContent = localStorage.getItem('adminUser') || 'Admin';
 
-        // Initialize products from localStorage
+        // Initialize products and images from localStorage
         loadProductsFromStorage();
+        loadImagesFromStorage();
 
         // Navigation
         function showSection(sectionId) {
@@ -528,7 +529,13 @@
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    addImageToGallery(e.target.result, file.name);
+                    const imageData = {
+                        src: e.target.result,
+                        name: file.name,
+                        id: Date.now() + Math.random()
+                    };
+                    addImageToGallery(imageData);
+                    saveImageToStorage(imageData);
                 };
                 reader.readAsDataURL(file);
             });
@@ -536,24 +543,25 @@
             showSuccessMessage(`${validFiles.length} imagem(s) adicionada(s) com sucesso!`);
         }
 
-        function addImageToGallery(imageSrc, fileName) {
+        function addImageToGallery(imageData) {
             const imageGallery = document.querySelector('#images .grid');
             const imageDiv = document.createElement('div');
             imageDiv.className = 'relative group';
+            imageDiv.setAttribute('data-image-id', imageData.id);
             imageDiv.innerHTML = `
-                <img src="${imageSrc}" alt="${fileName}" class="w-full h-32 object-cover rounded-lg">
+                <img src="${imageData.src}" alt="${imageData.name}" class="w-full h-32 object-cover rounded-lg">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                     <div class="flex space-x-2">
-                        <button onclick="downloadImage('${imageSrc}', '${fileName}')" class="text-white hover:text-blue-400 transition-colors duration-300" title="Download">
+                        <button onclick="downloadImage('${imageData.src}', '${imageData.name}')" class="text-white hover:text-blue-400 transition-colors duration-300" title="Download">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button onclick="removeImage(this)" class="text-white hover:text-red-400 transition-colors duration-300" title="Remover">
+                        <button onclick="removeImage(${imageData.id}, this)" class="text-white hover:text-red-400 transition-colors duration-300" title="Remover">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
                 <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg truncate">
-                    ${fileName}
+                    ${imageData.name}
                 </div>
             `;
             imageGallery.appendChild(imageDiv);
@@ -568,8 +576,9 @@
             document.body.removeChild(link);
         }
 
-        function removeImage(button) {
+        function removeImage(imageId, button) {
             if (confirm('Tem certeza que deseja remover esta imagem?')) {
+                removeImageFromStorage(imageId);
                 button.closest('.relative').remove();
                 showSuccessMessage('Imagem removida com sucesso!');
             }
@@ -765,6 +774,37 @@
             let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
             products = products.filter(product => product.id !== productId);
             localStorage.setItem('atelieProducts', JSON.stringify(products));
+        }
+
+        // localStorage functions for images
+        function saveImageToStorage(imageData) {
+            let images = JSON.parse(localStorage.getItem('atelieImages') || '[]');
+            images.push(imageData);
+            localStorage.setItem('atelieImages', JSON.stringify(images));
+        }
+
+        function loadImagesFromStorage() {
+            const images = JSON.parse(localStorage.getItem('atelieImages') || '[]');
+            const imageGallery = document.querySelector('#images .grid');
+            
+            // Clear existing images (except the default placeholders)
+            const defaultImages = document.querySelectorAll('#images .grid .relative');
+            defaultImages.forEach(img => {
+                if (img.querySelector('img[src*="placeholder"]')) {
+                    img.remove();
+                }
+            });
+            
+            // Add images from localStorage
+            images.forEach(imageData => {
+                addImageToGallery(imageData);
+            });
+        }
+
+        function removeImageFromStorage(imageId) {
+            let images = JSON.parse(localStorage.getItem('atelieImages') || '[]');
+            images = images.filter(image => image.id !== imageId);
+            localStorage.setItem('atelieImages', JSON.stringify(images));
         }
 
         function deleteProduct(productId, button) {
