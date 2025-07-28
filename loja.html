@@ -681,9 +681,6 @@
 
         // Função para configurar imagens com fallback
         async function getImageConfiguration(product) {
-            const hasImages = product.images && product.images.length > 0;
-            const firstImage = hasImages ? product.images[0] : null;
-            
             // Lista de imagens de fallback em ordem de prioridade
             const fallbackImages = [
                 'images/produtos/download.jpg',
@@ -695,31 +692,53 @@
             
             let primarySrc = fallbackImages[0];
             
-            if (firstImage) {
-                if (firstImage.src.startsWith('uploads/')) {
-                    // É uma URL simulada do admin, tentar usar imagens reais
+            // First, check if product has a primarySrc (from admin)
+            if (product.primarySrc) {
+                // Verify if the primarySrc exists
+                const exists = await checkImageExists(product.primarySrc);
+                if (exists) {
+                    primarySrc = product.primarySrc;
+                } else {
+                    // If primarySrc doesn't exist, try to find a valid image
+                    const bestImage = getBestImageForProduct(product);
+                    if (bestImage) {
+                        const bestImageExists = await checkImageExists(bestImage);
+                        if (bestImageExists) {
+                            primarySrc = bestImage;
+                        }
+                    }
+                }
+            } else {
+                // No primarySrc, check images array
+                const hasImages = product.images && product.images.length > 0;
+                const firstImage = hasImages ? product.images[0] : null;
+                
+                if (firstImage) {
+                    if (firstImage.src.startsWith('uploads/')) {
+                        // É uma URL simulada do admin, tentar usar imagens reais
+                        const realImages = getRealImagesForProduct(product.id);
+                        if (realImages.length > 0) {
+                            const validImage = await getFirstValidImage(realImages);
+                            primarySrc = validImage || fallbackImages[0];
+                        } else {
+                            // Se não há imagens reais, usar fallback
+                            primarySrc = fallbackImages[0];
+                        }
+                    } else {
+                        // É uma imagem real, verificar se existe
+                        const exists = await checkImageExists(firstImage.src);
+                        primarySrc = exists ? firstImage.src : fallbackImages[0];
+                    }
+                } else {
+                    // Não há imagens do admin, tentar usar imagens padrão do produto
                     const realImages = getRealImagesForProduct(product.id);
                     if (realImages.length > 0) {
                         const validImage = await getFirstValidImage(realImages);
                         primarySrc = validImage || fallbackImages[0];
                     } else {
-                        // Se não há imagens reais, usar fallback
+                        // Se não há imagens padrão, usar fallback
                         primarySrc = fallbackImages[0];
                     }
-                } else {
-                    // É uma imagem real, verificar se existe
-                    const exists = await checkImageExists(firstImage.src);
-                    primarySrc = exists ? firstImage.src : fallbackImages[0];
-                }
-            } else {
-                // Não há imagens do admin, tentar usar imagens padrão do produto
-                const realImages = getRealImagesForProduct(product.id);
-                if (realImages.length > 0) {
-                    const validImage = await getFirstValidImage(realImages);
-                    primarySrc = validImage || fallbackImages[0];
-                } else {
-                    // Se não há imagens padrão, usar fallback
-                    primarySrc = fallbackImages[0];
                 }
             }
             
@@ -866,8 +885,8 @@
                         priceElement.innerHTML = `<span class="text-2xl font-cursive text-rose-medium">R$ ${price}</span>`;
                     }
                     
-                    // Update image
-                    if (imageElement && product.images && product.images.length > 0) {
+                    // Update image using primarySrc or best available image
+                    if (imageElement) {
                         const bestImage = getBestImageForProduct(product);
                         if (bestImage) {
                             imageElement.src = bestImage;
@@ -884,14 +903,82 @@
                             if (loadingIndicator) {
                                 loadingIndicator.style.display = 'none';
                             }
+                        } else {
+                            // No valid image, show fallback
+                            showFallbackForProduct(productCard);
                         }
                     }
                 }
             });
         }
         
+        // Function to refresh store images without full page reload
+        function refreshStoreImages() {
+            console.log('Atualizando imagens da loja...');
+            
+            // Get updated products from localStorage
+            const adminProducts = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            
+            // Update each product card with new image data
+            adminProducts.forEach(product => {
+                const productCard = document.querySelector(`[data-product-id="${product.id}"]`);
+                if (productCard) {
+                    const imageElement = productCard.querySelector('.product-image');
+                    if (imageElement) {
+                        const bestImage = getBestImageForProduct(product);
+                        if (bestImage) {
+                            imageElement.src = bestImage;
+                            imageElement.style.display = 'block';
+                            
+                            // Hide fallback content
+                            const fallbackContent = productCard.querySelector('.fallback-content');
+                            if (fallbackContent) {
+                                fallbackContent.style.display = 'none';
+                            }
+                            
+                            // Hide loading indicator
+                            const loadingIndicator = productCard.querySelector('.loading-indicator');
+                            if (loadingIndicator) {
+                                loadingIndicator.style.display = 'none';
+                            }
+                        } else {
+                            // No valid image, show fallback
+                            showFallbackForProduct(productCard);
+                        }
+                    }
+                }
+            });
+            
+            showRefreshNotification();
+        }
+        
+        // Function to show fallback for a product card
+        function showFallbackForProduct(productCard) {
+            const imageElement = productCard.querySelector('.product-image');
+            const fallbackContent = productCard.querySelector('.fallback-content');
+            const loadingIndicator = productCard.querySelector('.loading-indicator');
+            
+            if (imageElement) {
+                imageElement.style.display = 'none';
+            }
+            
+            if (fallbackContent) {
+                fallbackContent.style.display = 'flex';
+            }
+            
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+        
         // Function to get the best available image for a product
         function getBestImageForProduct(product) {
+            // First, check if product has a primarySrc
+            if (product.primarySrc) {
+                return product.primarySrc;
+            }
+            
+            // If no primarySrc, check images array
             if (product.images && product.images.length > 0) {
                 // First, try to find a real image (not uploads/ URL)
                 const realImage = product.images.find(img => !img.src.startsWith('uploads/'));
@@ -943,17 +1030,12 @@
         // Add refresh button to page (optional)
         function addRefreshButton() {
             const header = document.querySelector('header');
-            if (header) {
+            if (header && !document.querySelector('.refresh-button')) {
                 const refreshButton = document.createElement('button');
-                refreshButton.className = 'ml-4 bg-rose-medium text-white px-3 py-2 rounded-lg hover:bg-rose-dark transition-colors duration-300';
-                refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i>';
-                refreshButton.title = 'Atualizar produtos';
-                refreshButton.onclick = manualRefreshProducts;
-                
-                const nav = header.querySelector('nav');
-                if (nav) {
-                    nav.appendChild(refreshButton);
-                }
+                refreshButton.className = 'refresh-button bg-rose-medium hover:bg-rose-dark text-white px-4 py-2 rounded-lg transition-colors duration-200 ml-4';
+                refreshButton.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Atualizar Imagens';
+                refreshButton.onclick = refreshStoreImages;
+                header.appendChild(refreshButton);
             }
         }
         

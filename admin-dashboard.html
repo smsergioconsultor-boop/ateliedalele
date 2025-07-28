@@ -1330,6 +1330,11 @@
                 }
                 products[productIndex].images.push(storageImageData);
                 
+                // Update primarySrc to the first image (most recent upload becomes primary)
+                if (products[productIndex].images.length === 1) {
+                    products[productIndex].primarySrc = storageImageData.src;
+                }
+                
                 // Ensure product has all required fields
                 products[productIndex].name = products[productIndex].name || getProductNameById(productId) || 'Produto';
                 products[productIndex].description = products[productIndex].description || getProductDescriptionById(productId) || 'Descrição do produto';
@@ -1356,7 +1361,8 @@
                     shopeeLink: 'https://shopee.com.br/ateliedalelê',
                     icon: getProductIconById(productId) || 'fas fa-heart',
                     gradient: getProductGradientById(productId) || 'from-rose-light to-rose-medium',
-                    images: [storageImageData]
+                    images: [storageImageData],
+                    primarySrc: storageImageData.src // Set the first image as primary
                 };
                 products.push(product);
                 try {
@@ -1441,7 +1447,23 @@
             const productIndex = products.findIndex(p => p.id === productId);
             
             if (productIndex !== -1 && products[productIndex].images) {
+                // Find the image to be removed
+                const imageToRemove = products[productIndex].images.find(img => img.id === imageId);
+                
+                // Remove the image
                 products[productIndex].images = products[productIndex].images.filter(img => img.id !== imageId);
+                
+                // Update primarySrc if the removed image was the primary
+                if (imageToRemove && products[productIndex].primarySrc === imageToRemove.src) {
+                    if (products[productIndex].images.length > 0) {
+                        // Set the first remaining image as primary
+                        products[productIndex].primarySrc = products[productIndex].images[0].src;
+                    } else {
+                        // No images left, clear primarySrc (will use fallback)
+                        products[productIndex].primarySrc = null;
+                    }
+                }
+                
                 try {
                     localStorage.setItem('atelieProducts', JSON.stringify(products));
                 } catch (error) {
@@ -1489,9 +1511,15 @@
             if (productIndex !== -1 && products[productIndex].images) {
                 const imageIndex = products[productIndex].images.findIndex(img => img.id === imageId);
                 if (imageIndex !== -1) {
+                    const oldSrc = products[productIndex].images[imageIndex].src;
                     products[productIndex].images[imageIndex].src = newSrc;
                     products[productIndex].images[imageIndex].name = newName;
                     products[productIndex].images[imageIndex].updatedAt = new Date().toISOString();
+                    
+                    // Update primarySrc if this was the primary image
+                    if (products[productIndex].primarySrc === oldSrc) {
+                        products[productIndex].primarySrc = newSrc;
+                    }
                     
                     try {
                         localStorage.setItem('atelieProducts', JSON.stringify(products));
@@ -1599,6 +1627,11 @@
                     type: 'UPDATE_PRODUCTS',
                     products: products
                 }, '*');
+                
+                // Try to call refreshStoreImages if available
+                if (window.opener.refreshStoreImages) {
+                    window.opener.refreshStoreImages();
+                }
             }
             
             // Trigger custom event for real-time updates
@@ -1642,8 +1675,8 @@
                 const productCard = document.querySelector(`[data-product-id="${product.id}"]`);
                 if (productCard) {
                     const imageElement = productCard.querySelector('.product-image');
-                    if (imageElement && product.images && product.images.length > 0) {
-                        // Get the best available image
+                    if (imageElement) {
+                        // Get the best available image using primarySrc or images array
                         const bestImage = getBestImageForProduct(product);
                         if (bestImage) {
                             imageElement.src = bestImage;
@@ -1654,14 +1687,48 @@
                             if (fallbackContent) {
                                 fallbackContent.style.display = 'none';
                             }
+                            
+                            // Hide loading indicator
+                            const loadingIndicator = productCard.querySelector('.loading-indicator');
+                            if (loadingIndicator) {
+                                loadingIndicator.style.display = 'none';
+                            }
+                        } else {
+                            // No valid image, show fallback
+                            showFallbackForProduct(productCard);
                         }
                     }
                 }
             });
         }
         
+        // Function to show fallback for a product card
+        function showFallbackForProduct(productCard) {
+            const imageElement = productCard.querySelector('.product-image');
+            const fallbackContent = productCard.querySelector('.fallback-content');
+            const loadingIndicator = productCard.querySelector('.loading-indicator');
+            
+            if (imageElement) {
+                imageElement.style.display = 'none';
+            }
+            
+            if (fallbackContent) {
+                fallbackContent.style.display = 'flex';
+            }
+            
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+        
         // Function to get the best available image for a product
         function getBestImageForProduct(product) {
+            // First, check if product has a primarySrc
+            if (product.primarySrc) {
+                return product.primarySrc;
+            }
+            
+            // If no primarySrc, check images array
             if (product.images && product.images.length > 0) {
                 // First, try to find a real image (not uploads/ URL)
                 const realImage = product.images.find(img => !img.src.startsWith('uploads/'));
