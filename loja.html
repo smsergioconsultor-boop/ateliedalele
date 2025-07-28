@@ -48,6 +48,210 @@
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS for Product Cards -->
+    <style>
+        /* Product Card Styles - Corrigido */
+        .product-card {
+            transition: all 0.3s ease;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 500px; /* Altura mínima para consistência */
+        }
+        
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .product-image-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 280px; /* Altura fixa para consistência */
+            min-height: 280px;
+            flex-shrink: 0; /* Impede que a imagem encolha */
+        }
+        
+        .product-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            display: block; /* Remove espaços em branco */
+        }
+        
+        .product-image-container:hover img {
+            transform: scale(1.05);
+        }
+        
+        /* Fallback content styles */
+        .fallback-content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, #fce7f3 0%, #f9a8d4 100%);
+        }
+        
+        .fallback-content i {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+        
+        .fallback-content p {
+            color: white;
+            font-weight: 600;
+            font-size: 1.125rem;
+            padding: 0 1rem;
+        }
+        
+        /* Loading indicator */
+        .loading-indicator {
+            position: absolute;
+            inset: 0;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .loading-indicator.hidden {
+            display: none;
+        }
+        
+        /* Product content area */
+        .product-content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 1.5rem;
+        }
+        
+        .product-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+            min-height: 2.8rem; /* Altura mínima para consistência */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .product-description {
+            color: #6b7280;
+            margin-bottom: 1rem;
+            flex-grow: 1;
+            min-height: 4.5rem; /* Altura mínima para consistência */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+        
+        .product-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .product-price {
+            font-size: 1.5rem;
+            font-family: 'Dancing Script', cursive;
+            color: #ec4899;
+            font-weight: 700;
+        }
+        
+        .shopee-button {
+            background: #ec4899;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .shopee-button:hover {
+            background: rgba(236, 72, 153, 0.9);
+            transform: scale(1.05);
+        }
+        
+        .shopee-button i {
+            margin-right: 0.5rem;
+        }
+        
+        /* Line clamp utilities */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Loading animation */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .fa-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .product-image-container {
+                height: 240px !important;
+                min-height: 240px;
+            }
+            
+            .product-card {
+                min-height: 460px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .product-image-container {
+                height: 200px !important;
+                min-height: 200px;
+            }
+            
+            .product-card {
+                min-height: 420px;
+            }
+        }
+    </style>
 </head>
 <body class="bg-rose-pastel font-sans">
     <!-- WhatsApp Button Fixed with Tooltip -->
@@ -162,8 +366,8 @@
                 </p>
             </div>
             
-            <!-- Grid responsivo corrigido -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch" id="productsGrid">
+            <!-- Grid responsivo com alinhamento consistente -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="productsGrid">
                 <!-- Products will be loaded here dynamically -->
             </div>
         </div>
@@ -319,39 +523,52 @@
             });
         });
 
-        // Load products from localStorage
+        // Load products from localStorage with improved image handling
         function loadProducts() {
             const productsGrid = document.getElementById('productsGrid');
             const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
             
-            // Default products (fallback)
+            // Default products with verified image paths
             const defaultProducts = [
                 {
                     name: 'Álbum de Casamento',
-                    description: 'Álbum personalizado com detalhes em renda e flores secas',
+                    description: 'Álbum personalizado com detalhes em renda e flores secas. Perfeito para guardar as memórias mais especiais do seu grande dia.',
                     price: '89.90',
                     category: 'albuns',
                     shopeeLink: 'https://shopee.com.br/ateliedalelê',
                     icon: 'fas fa-heart',
-                    gradient: 'from-rose-light to-rose-medium'
+                    gradient: 'from-rose-light to-rose-medium',
+                    images: [{ src: 'images/produtos/IMG_5262.JPG' }]
                 },
                 {
                     name: 'Scrapbook Baby',
-                    description: 'Álbum para registrar os primeiros momentos do bebê',
+                    description: 'Álbum para registrar os primeiros momentos do bebê. Cada página é uma nova descoberta e sorriso.',
                     price: '75.00',
                     category: 'albuns',
                     shopeeLink: 'https://shopee.com.br/ateliedalelê',
                     icon: 'fas fa-baby',
-                    gradient: 'from-blue-200 to-blue-400'
+                    gradient: 'from-blue-200 to-blue-400',
+                    images: [{ src: 'images/produtos/26f5.png' }]
                 },
                 {
-                    name: 'Kit Scrapbook',
-                    description: 'Kit completo com papéis, adesivos e acessórios',
+                    name: 'Kit Scrapbook Completo',
+                    description: 'Kit completo com papéis decorativos, adesivos, fitas e acessórios. Tudo que você precisa para criar memórias únicas.',
                     price: '45.00',
                     category: 'kits',
                     shopeeLink: 'https://shopee.com.br/ateliedalelê',
                     icon: 'fas fa-palette',
-                    gradient: 'from-green-200 to-green-400'
+                    gradient: 'from-green-200 to-green-400',
+                    images: [{ src: 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg' }]
+                },
+                {
+                    name: 'Álbum de Viagem',
+                    description: 'Álbum especial para registrar suas aventuras e momentos inesquecíveis de viagem.',
+                    price: '65.00',
+                    category: 'albuns',
+                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
+                    icon: 'fas fa-plane',
+                    gradient: 'from-purple-200 to-purple-400',
+                    images: [{ src: 'images/produtos/images.jpg' }]
                 }
             ];
 
@@ -368,32 +585,45 @@
             });
         }
 
+        // Função melhorada para criar cards de produtos com sistema robusto de fallback
         function createProductCard(product) {
             const card = document.createElement('div');
-            card.className = 'bg-rose-pastel rounded-2xl p-6 hover:scale-105 transition-all duration-300 shadow-lg group flex flex-col h-full';
+            card.className = 'product-card';
             
-            // Get first image or use icon
-            const hasImages = product.images && product.images.length > 0;
-            const firstImage = hasImages ? product.images[0] : null;
+            // Configuração de imagens com fallback
+            const imageConfig = getImageConfiguration(product);
             
             card.innerHTML = `
-                <div class="bg-gradient-to-br ${product.gradient || 'from-rose-light to-rose-medium'} rounded-xl h-48 mb-4 flex items-center justify-center overflow-hidden relative">
-                    ${hasImages ? 
-                        `<img src="${firstImage.src}" alt="${product.name}" class="w-full h-full object-cover rounded-xl hover:scale-110 transition-transform duration-300" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
-                        ``
-                    }
-                    <div class="text-center ${hasImages ? 'hidden' : 'flex flex-col items-center justify-center'}" ${hasImages ? 'style="display: none;"' : ''}>
-                        <i class="${product.icon || 'fas fa-heart'} text-6xl text-white mb-4"></i>
-                        <p class="text-white font-semibold">${product.name}</p>
+                <div class="product-image-container">
+                    <!-- Loading indicator -->
+                    <div class="loading-indicator" id="loading-${product.name.replace(/\s+/g, '-').toLowerCase()}">
+                        <i class="fas fa-spinner fa-spin text-rose-medium text-2xl"></i>
+                    </div>
+                    
+                    <!-- Main image -->
+                    <img src="${imageConfig.primarySrc}" 
+                         alt="${product.name}" 
+                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                         onload="handleImageLoad(this, '${product.name.replace(/\s+/g, '-').toLowerCase()}')"
+                         onerror="handleImageError(this, '${product.name.replace(/\s+/g, '-').toLowerCase()}', '${imageConfig.fallbackSrc}', '${product.name}', '${product.icon || 'fas fa-heart'}', '${product.gradient || 'from-rose-light to-rose-medium'}')">
+                    
+                    <!-- Fallback content (hidden by default) -->
+                    <div class="fallback-content" id="fallback-${product.name.replace(/\s+/g, '-').toLowerCase()}" style="display: none;">
+                        <i class="${product.icon || 'fas fa-heart'}"></i>
+                        <p>${product.name}</p>
                     </div>
                 </div>
-                <div class="flex flex-col flex-grow">
-                    <h3 class="text-xl font-elegant text-gray-800 mb-2">${product.name}</h3>
-                    <p class="text-gray-600 mb-4 flex-grow">${product.description}</p>
-                    <div class="flex justify-between items-center mt-auto">
-                        <span class="text-2xl font-cursive text-rose-medium">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</span>
-                        <a href="${product.shopeeLink || 'https://shopee.com.br/ateliedalelê'}" target="_blank" 
-                           class="bg-rose-medium text-white px-4 py-2 rounded-full text-sm hover:bg-rose-medium/90 transition-colors duration-300 group-hover:scale-105">
+                
+                <div class="product-content">
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-description">${product.description}</p>
+                    
+                    <div class="product-footer">
+                        <span class="product-price">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</span>
+                        <a href="${product.shopeeLink || 'https://shopee.com.br/ateliedalelê'}" 
+                           target="_blank" 
+                           class="shopee-button">
+                            <i class="fas fa-shopping-bag"></i>
                             Ver na Shopee
                         </a>
                     </div>
@@ -401,6 +631,64 @@
             `;
             
             return card;
+        }
+
+        // Função para configurar imagens com fallback
+        function getImageConfiguration(product) {
+            const hasImages = product.images && product.images.length > 0;
+            const firstImage = hasImages ? product.images[0] : null;
+            
+            // Lista de imagens de fallback em ordem de prioridade
+            const fallbackImages = [
+                'images/produtos/download.jpg',
+                'images/produtos/26f5.png',
+                'images/produtos/images.jpg',
+                'images/produtos/IMG_5262.JPG'
+            ];
+            
+            return {
+                primarySrc: firstImage ? firstImage.src : fallbackImages[0],
+                fallbackSrc: fallbackImages[1] || fallbackImages[0]
+            };
+        }
+
+        // Função para lidar com carregamento bem-sucedido da imagem
+        function handleImageLoad(imgElement, productId) {
+            const loadingIndicator = document.getElementById(`loading-${productId}`);
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        // Função para lidar com erro de carregamento da imagem
+        function handleImageError(imgElement, productId, fallbackSrc, productName, icon, gradient) {
+            const loadingIndicator = document.getElementById(`loading-${productId}`);
+            const fallbackContent = document.getElementById(`fallback-${productId}`);
+            
+            // Esconder loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+            
+            // Se ainda não tentou o fallback, tenta
+            if (!imgElement.dataset.fallbackAttempted) {
+                imgElement.dataset.fallbackAttempted = 'true';
+                imgElement.src = fallbackSrc;
+                return;
+            }
+            
+            // Se já tentou fallback e falhou, mostra o conteúdo de fallback
+            if (fallbackContent) {
+                imgElement.style.display = 'none';
+                fallbackContent.style.display = 'flex';
+                
+                // Aplica o gradiente específico do produto se disponível
+                if (gradient) {
+                    fallbackContent.style.background = `linear-gradient(135deg, ${gradient.includes('from-') ? 
+                        gradient.replace('from-', '').replace('to-', '') : 
+                        '#fce7f3 0%, #f9a8d4 100%'})`;
+                }
+            }
         }
 
         // Load products when page loads
