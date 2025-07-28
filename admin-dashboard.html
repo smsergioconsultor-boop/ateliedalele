@@ -946,9 +946,20 @@
         }
 
         // ========================================
-        // SEÇÃO: FUNÇÕES DE PRODUTOS
+        // SEÇÃO: FUNÇÕES DE PRODUTOS - REFATORADA
         // ========================================
         
+        // Constantes para produtos
+        const FALLBACK_IMAGE = "img/fallback.jpg";
+        const STORAGE_LIMIT = 4500000; // ~4.5MB
+        const PRODUCT_CATEGORIES = {
+            'albuns': 'Álbuns',
+            'kits': 'Kits', 
+            'acessorios': 'Acessórios',
+            'personalizados': 'Personalizados',
+            'outros': 'Outros'
+        };
+
         /**
          * Valida dados do produto antes de salvar
          */
@@ -961,7 +972,8 @@
             }
             
             // Validação de preço
-            if (!productData.price || isNaN(parseFloat(productData.price)) || parseFloat(productData.price) <= 0) {
+            const price = parseFloat(productData.price);
+            if (!productData.price || isNaN(price) || price <= 0) {
                 errors.push("Preço deve ser um valor válido maior que zero");
             }
             
@@ -995,6 +1007,20 @@
             }
         }
 
+        /**
+         * Formata preço para exibição
+         */
+        function formatPrice(price) {
+            return parseFloat(price).toFixed(2).replace('.', ',');
+        }
+
+        /**
+         * Gera ID único para produto
+         */
+        function generateProductId() {
+            return `product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+
         // ========================================
         // GESTÃO DE PRODUTOS NO LOCALSTORAGE
         // ========================================
@@ -1015,21 +1041,31 @@
                 let products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
 
                 // Verifica se já existe produto com mesmo nome
-                const existingProduct = products.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+                const existingProduct = products.find(p => p.name.toLowerCase() === productData.name.trim().toLowerCase());
                 if (existingProduct) {
                     showErrorMessage("Já existe um produto com este nome!");
                     return false;
                 }
 
-                // Garante ID único
+                // Processa imagens se fornecidas
+                let processedImages = [];
+                if (productData.images && productData.images.length > 0) {
+                    processedImages = productData.images.map(img => ({
+                        id: Date.now() + Math.random(),
+                        src: img.src || FALLBACK_IMAGE,
+                        name: img.name || 'Imagem do produto'
+                    }));
+                }
+
+                // Garante ID único e formata dados
                 const newProduct = {
-                    id: `product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    id: generateProductId(),
                     name: productData.name.trim(),
                     description: productData.description.trim(),
-                    price: parseFloat(productData.price),
+                    price: parseFloat(productData.price).toFixed(2),
                     category: productData.category,
-                    primarySrc: productData.primarySrc || FALLBACK_IMAGE,
-                    images: productData.images || [],
+                    primarySrc: processedImages.length > 0 ? processedImages[0].src : FALLBACK_IMAGE,
+                    images: processedImages,
                     shopeeLink: productData.shopeeLink || "",
                     status: "Ativo",
                     createdAt: new Date().toISOString(),
@@ -1088,7 +1124,7 @@
                 newRow.setAttribute('data-product-id', product.id);
                 newRow.innerHTML = `
                     <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(product.name)}</td>
-                    <td class="px-6 py-4">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4">R$ ${formatPrice(product.price)}</td>
                     <td class="px-6 py-4">${getCategoryName(product.category)}</td>
                     <td class="px-6 py-4">
                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">${product.status || 'Ativo'}</span>
@@ -1175,7 +1211,11 @@
                 // Atualiza produto
                 products[productIndex] = {
                     ...products[productIndex],
-                    ...updatedData,
+                    name: updatedData.name.trim(),
+                    description: updatedData.description.trim(),
+                    price: parseFloat(updatedData.price).toFixed(2),
+                    category: updatedData.category,
+                    shopeeLink: updatedData.shopeeLink || "",
                     updatedAt: new Date().toISOString()
                 };
 
@@ -1193,6 +1233,98 @@
                 showErrorMessage('Erro ao atualizar produto');
                 return false;
             }
+        }
+
+        /**
+         * Exibe formulário para editar produto
+         */
+        function showEditProductForm(product) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800">Editar Produto</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="editProductForm" class="space-y-4">
+                        <input type="hidden" name="productId" value="${product.id}">
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Produto *</label>
+                            <input type="text" name="productName" value="${escapeHtml(product.name)}" required minlength="2" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrição *</label>
+                            <textarea name="description" rows="3" required minlength="10" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">${escapeHtml(product.description)}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Preço (R$) *</label>
+                            <input type="number" name="price" step="0.01" min="0.01" value="${product.price}" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+                            <select name="category" required 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                                <option value="">Selecione uma categoria</option>
+                                <option value="albuns" ${product.category === 'albuns' ? 'selected' : ''}>Álbuns</option>
+                                <option value="kits" ${product.category === 'kits' ? 'selected' : ''}>Kits</option>
+                                <option value="acessorios" ${product.category === 'acessorios' ? 'selected' : ''}>Acessórios</option>
+                                <option value="personalizados" ${product.category === 'personalizados' ? 'selected' : ''}>Personalizados</option>
+                                <option value="outros" ${product.category === 'outros' ? 'selected' : ''}>Outros</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Link da Shopee</label>
+                            <input type="url" name="shopeeLink" value="${escapeHtml(product.shopeeLink || '')}" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="closeModal()" 
+                                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                                Cancelar
+                            </button>
+                            <button type="submit" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                                <i class="fas fa-save mr-2"></i>
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('editProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const productId = formData.get('productId');
+                const updatedData = {
+                    name: formData.get('productName'),
+                    description: formData.get('description'),
+                    price: formData.get('price'),
+                    category: formData.get('category'),
+                    shopeeLink: formData.get('shopeeLink')
+                };
+                
+                if (updateProductInStorage(productId, updatedData)) {
+                    closeModal();
+                    showSuccessMessage('Produto atualizado com sucesso!');
+                }
+            });
         }
 
         // ========================================
@@ -1331,8 +1463,16 @@
                 return;
             }
             
-            // TODO: Implementar formulário de edição
-            alert('Funcionalidade de edição será implementada em breve!');
+            // Busca dados do produto
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) {
+                showErrorMessage('Produto não encontrado');
+                return;
+            }
+            
+            showEditProductForm(product);
         }
 
         /**
@@ -2340,9 +2480,269 @@
             initializeDashboard();
         });
 
+        // ========================================
+        // SEÇÃO: TESTES AUTOMÁTICOS PARA PRODUTOS
+        // ========================================
+        
+        /**
+         * Teste completo da aba de produtos
+         */
+        function runProductTests() {
+            console.log('🧪 INICIANDO TESTES DA ABA PRODUTOS');
+            console.log('====================================');
+            
+            const tests = [
+                testAddProduct,
+                testEditProduct,
+                testDeleteProduct,
+                testProductValidation,
+                testProductSynchronization
+            ];
+            
+            let passedTests = 0;
+            let totalTests = tests.length;
+            
+            tests.forEach((test, index) => {
+                try {
+                    console.log(`\n📋 Teste ${index + 1}: ${test.name}`);
+                    if (test()) {
+                        passedTests++;
+                        console.log(`✅ ${test.name} - PASSOU`);
+                    } else {
+                        console.log(`❌ ${test.name} - FALHOU`);
+                    }
+                } catch (error) {
+                    console.log(`❌ ${test.name} - ERRO: ${error.message}`);
+                }
+            });
+            
+            console.log(`\n📊 RESULTADO DOS TESTES DE PRODUTOS: ${passedTests}/${totalTests} testes passaram`);
+            
+            if (passedTests === totalTests) {
+                console.log('🎉 Todos os testes de produtos passaram!');
+                return true;
+            } else {
+                console.log('⚠️ Alguns testes de produtos falharam.');
+                return false;
+            }
+        }
+
+        /**
+         * Testa adição de produto
+         */
+        function testAddProduct() {
+            const testProduct = {
+                name: 'Produto Teste',
+                description: 'Descrição do produto teste com mais de 10 caracteres para validação',
+                price: '25.50',
+                category: 'albuns',
+                shopeeLink: 'https://shopee.com.br/teste'
+            };
+            
+            // Testa validação
+            const validation = validateProductData(testProduct);
+            if (!validation.isValid) {
+                console.log('❌ Validação falhou:', validation.errors);
+                return false;
+            }
+            
+            // Testa adição
+            const result = addProductToList(testProduct);
+            if (!result) {
+                console.log('❌ Adição de produto falhou');
+                return false;
+            }
+            
+            // Verifica se foi salvo no localStorage
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const addedProduct = products.find(p => p.name === testProduct.name);
+            if (!addedProduct) {
+                console.log('❌ Produto não foi salvo no localStorage');
+                return false;
+            }
+            
+            // Verifica se tem ID único
+            if (!addedProduct.id || !addedProduct.id.startsWith('product_')) {
+                console.log('❌ ID único não foi gerado corretamente');
+                return false;
+            }
+            
+            // Verifica formatação do preço
+            if (addedProduct.price !== '25.50') {
+                console.log('❌ Preço não foi formatado corretamente');
+                return false;
+            }
+            
+            console.log('✅ Produto adicionado com sucesso:', addedProduct);
+            return true;
+        }
+
+        /**
+         * Testa edição de produto
+         */
+        function testEditProduct() {
+            // Busca um produto para editar
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const productToEdit = products.find(p => p.name === 'Produto Teste');
+            
+            if (!productToEdit) {
+                console.log('❌ Produto para editar não encontrado');
+                return false;
+            }
+            
+            const updatedData = {
+                name: 'Produto Teste Editado',
+                description: 'Descrição editada com mais de 10 caracteres',
+                price: '35.75',
+                category: 'kits',
+                shopeeLink: 'https://shopee.com.br/teste-editado'
+            };
+            
+            // Testa atualização
+            const result = updateProductInStorage(productToEdit.id, updatedData);
+            if (!result) {
+                console.log('❌ Atualização de produto falhou');
+                return false;
+            }
+            
+            // Verifica se foi atualizado no localStorage
+            const updatedProducts = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const updatedProduct = updatedProducts.find(p => p.id === productToEdit.id);
+            
+            if (!updatedProduct || updatedProduct.name !== updatedData.name) {
+                console.log('❌ Produto não foi atualizado corretamente');
+                return false;
+            }
+            
+            console.log('✅ Produto editado com sucesso:', updatedProduct);
+            return true;
+        }
+
+        /**
+         * Testa exclusão de produto
+         */
+        function testDeleteProduct() {
+            // Busca um produto para excluir
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const productToDelete = products.find(p => p.name === 'Produto Teste Editado');
+            
+            if (!productToDelete) {
+                console.log('❌ Produto para excluir não encontrado');
+                return false;
+            }
+            
+            const initialCount = products.length;
+            
+            // Testa remoção
+            const result = removeProductFromStorage(productToDelete.id);
+            if (!result) {
+                console.log('❌ Remoção de produto falhou');
+                return false;
+            }
+            
+            // Verifica se foi removido do localStorage
+            const remainingProducts = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const deletedProduct = remainingProducts.find(p => p.id === productToDelete.id);
+            
+            if (deletedProduct) {
+                console.log('❌ Produto não foi removido do localStorage');
+                return false;
+            }
+            
+            if (remainingProducts.length !== initialCount - 1) {
+                console.log('❌ Contagem de produtos incorreta após remoção');
+                return false;
+            }
+            
+            console.log('✅ Produto removido com sucesso');
+            return true;
+        }
+
+        /**
+         * Testa validações de produto
+         */
+        function testProductValidation() {
+            const testCases = [
+                {
+                    name: 'Teste Validação Nome Vazio',
+                    data: { name: '', description: 'Descrição válida', price: '10.00', category: 'albuns' },
+                    shouldPass: false
+                },
+                {
+                    name: 'Teste Validação Nome Curto',
+                    data: { name: 'A', description: 'Descrição válida', price: '10.00', category: 'albuns' },
+                    shouldPass: false
+                },
+                {
+                    name: 'Teste Validação Preço Inválido',
+                    data: { name: 'Produto Válido', description: 'Descrição válida', price: '-5.00', category: 'albuns' },
+                    shouldPass: false
+                },
+                {
+                    name: 'Teste Validação Descrição Curta',
+                    data: { name: 'Produto Válido', description: 'Curta', price: '10.00', category: 'albuns' },
+                    shouldPass: false
+                },
+                {
+                    name: 'Teste Validação Categoria Inválida',
+                    data: { name: 'Produto Válido', description: 'Descrição válida', price: '10.00', category: 'categoria_invalida' },
+                    shouldPass: false
+                },
+                {
+                    name: 'Teste Validação Dados Válidos',
+                    data: { name: 'Produto Válido', description: 'Descrição válida com mais de 10 caracteres', price: '10.00', category: 'albuns' },
+                    shouldPass: true
+                }
+            ];
+            
+            let passedTests = 0;
+            
+            testCases.forEach(testCase => {
+                const validation = validateProductData(testCase.data);
+                const passed = validation.isValid === testCase.shouldPass;
+                
+                if (passed) {
+                    passedTests++;
+                    console.log(`✅ ${testCase.name} - PASSOU`);
+                } else {
+                    console.log(`❌ ${testCase.name} - FALHOU (esperado: ${testCase.shouldPass}, obtido: ${validation.isValid})`);
+                }
+            });
+            
+            return passedTests === testCases.length;
+        }
+
+        /**
+         * Testa sincronização com a loja
+         */
+        function testProductSynchronization() {
+            // Testa se a função refreshStoreImages existe
+            if (typeof refreshStoreImages !== 'function') {
+                console.log('❌ Função refreshStoreImages não encontrada');
+                return false;
+            }
+            
+            // Testa se a função updateLojaPage existe
+            if (typeof updateLojaPage !== 'function') {
+                console.log('❌ Função updateLojaPage não encontrada');
+                return false;
+            }
+            
+            // Simula uma atualização
+            try {
+                refreshStoreImages();
+                console.log('✅ Sincronização com loja funcionando');
+                return true;
+            } catch (error) {
+                console.log('❌ Erro na sincronização:', error.message);
+                return false;
+            }
+        }
+
         // Função global para diagnóstico (pode ser chamada no console)
         window.diagnoseSystem = diagnoseSystem;
         window.runValidationTests = runValidationTests;
+        window.runProductTests = runProductTests;
         window.clearStorageData = clearStorageData;
         window.exportData = exportData;
     </script>
