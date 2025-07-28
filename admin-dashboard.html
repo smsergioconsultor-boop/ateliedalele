@@ -1228,347 +1228,99 @@
         // Simulated upload counter for generating unique URLs
         let uploadCounter = 1;
         
+        const FALLBACK_IMAGE = "img/fallback.jpg";
+
+        /**
+         * Faz upload de imagens e atualiza o produto no localStorage.
+         */
         function handleProductImageUpload(files, productId) {
-            const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-            
+            const validFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
             if (validFiles.length === 0) {
-                showNotification('Nenhuma imagem válida selecionada!', 'error');
+                showNotification("Nenhuma imagem válida selecionada!", "error");
                 return;
             }
 
-            let uploadedCount = 0;
-            const totalFiles = validFiles.length;
-
             validFiles.forEach(file => {
-                if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                    showNotification(`Arquivo ${file.name} é muito grande! Máximo 5MB.`, 'error');
-                    return;
-                }
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const newImageSrc = e.target.result;
 
-                // Create object URL for immediate display
-                const objectUrl = URL.createObjectURL(file);
-                
-                // Generate simulated upload URL
-                const uploadUrl = `uploads/${productId}_${uploadCounter++}_${file.name}`;
-                
-                const imageData = {
-                    src: uploadUrl, // Store the simulated URL
-                    objectUrl: objectUrl, // Store object URL for immediate display
-                    name: file.name,
-                    id: Date.now() + Math.random(),
-                    uploadedAt: new Date().toISOString(),
-                    type: 'uploaded'
+                    // Atualiza o produto com a nova imagem
+                    updateProductImage(productId, newImageSrc);
+                    addImageToProductGallery({ id: Date.now(), src: newImageSrc }, productId);
+                    showNotification("Imagem adicionada com sucesso!", "success");
                 };
-                
-                addImageToProductGallery(imageData, productId);
-                saveProductImageToStorage(imageData, productId);
-                
-                uploadedCount++;
-                if (uploadedCount === totalFiles) {
-                    showNotification(`${uploadedCount} imagem(s) adicionada(s) com sucesso!`, 'success');
-                    updateLojaPage(); // Update the shop page
-                }
+                reader.readAsDataURL(file);
             });
         }
 
+        /**
+         * Adiciona imagem na galeria do modal.
+         */
         function addImageToProductGallery(imageData, productId) {
-            const gallery = document.getElementById('productImageGallery');
-            
+            const imageGallery = document.getElementById('productImageGallery');
+            if (!imageGallery) return;
+
             // Remove empty state if exists
-            const emptyState = gallery.querySelector('.empty-state');
+            const emptyState = imageGallery.querySelector('.empty-state');
             if (emptyState) {
                 emptyState.remove();
             }
-            
-            // Use objectUrl for immediate display if available, otherwise use src
-            const displayUrl = imageData.objectUrl || imageData.src;
-            
-            const imageDiv = document.createElement('div');
-            imageDiv.className = 'image-thumbnail';
-            imageDiv.setAttribute('data-image-id', imageData.id);
+
+            const imageDiv = document.createElement("div");
+            imageDiv.className = "relative group";
+            imageDiv.setAttribute("data-image-id", imageData.id);
             imageDiv.innerHTML = `
-                <img src="${displayUrl}" alt="${imageData.name}" onload="this.parentElement.classList.remove('image-loading')" onerror="handleImageError(this, '${imageData.id}')">
-                <div class="image-thumbnail-overlay">
-                    <div class="image-actions">
-                        <button onclick="editProductImage('${imageData.id}', '${productId}')" class="image-action-btn edit" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="downloadProductImage('${displayUrl}', '${imageData.name}')" class="image-action-btn download" title="Download">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button onclick="removeProductImage('${imageData.id}', '${productId}')" class="image-action-btn delete" title="Excluir">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-2 rounded-b-lg">
-                    <div class="truncate">${imageData.name}</div>
-                </div>
+                <img src="${imageData.src || FALLBACK_IMAGE}" 
+                     alt="Imagem do Produto"
+                     class="w-full h-32 object-cover rounded-md border"
+                     onerror="this.src='${FALLBACK_IMAGE}'">
+                <button class="absolute top-1 right-1 bg-red-500 text-white px-1 py-0.5 rounded text-xs"
+                        onclick="removeProductImage(${imageData.id}, '${productId}', this)">
+                    Excluir
+                </button>
             `;
-            
-            // Add loading class initially
-            imageDiv.classList.add('image-loading');
-            gallery.appendChild(imageDiv);
+            imageGallery.appendChild(imageDiv);
         }
 
-        function saveProductImageToStorage(imageData, productId) {
-            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            const productIndex = products.findIndex(p => p.id === productId);
-            
-            // Create a clean version without objectUrl for storage
-            const storageImageData = {
-                src: imageData.src,
-                name: imageData.name,
-                id: imageData.id,
-                uploadedAt: imageData.uploadedAt,
-                type: imageData.type
-            };
-            
-            if (productIndex !== -1) {
-                if (!products[productIndex].images) {
-                    products[productIndex].images = [];
+        /**
+         * Remove imagem do produto e atualiza localStorage.
+         */
+        function removeProductImage(imageId, productId, button) {
+            if (!confirm("Tem certeza que deseja remover esta imagem?")) return;
+
+            // Remove do DOM
+            button.closest(".relative").remove();
+
+            // Remove do produto no localStorage
+            const products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
+            const product = products.find(p => p.id === productId);
+            if (product && product.images) {
+                product.images = product.images.filter(img => img.id !== imageId);
+                // Se não houver imagens, define fallback
+                if (!product.images.length) {
+                    product.primarySrc = FALLBACK_IMAGE;
                 }
-                products[productIndex].images.push(storageImageData);
-                
-                // Update primarySrc to the first image (most recent upload becomes primary)
-                if (products[productIndex].images.length === 1) {
-                    products[productIndex].primarySrc = storageImageData.src;
-                }
-                
-                // Ensure product has all required fields
-                products[productIndex].name = products[productIndex].name || getProductNameById(productId) || 'Produto';
-                products[productIndex].description = products[productIndex].description || getProductDescriptionById(productId) || 'Descrição do produto';
-                products[productIndex].price = products[productIndex].price || getProductPriceById(productId) || '0.00';
-                products[productIndex].icon = products[productIndex].icon || getProductIconById(productId) || 'fas fa-heart';
-                products[productIndex].gradient = products[productIndex].gradient || getProductGradientById(productId) || 'from-rose-light to-rose-medium';
-                
-                try {
-                    localStorage.setItem('atelieProducts', JSON.stringify(products));
-                    // Update loja.html immediately
-                    updateLojaPage();
-                } catch (error) {
-                    console.warn('Erro ao salvar no localStorage:', error);
-                    showNotification('Erro ao salvar imagem. Tente novamente.', 'error');
-                }
-            } else {
-                // If product doesn't exist, create it with complete data
-                const product = {
-                    id: productId,
-                    name: getProductNameById(productId) || 'Produto',
-                    description: getProductDescriptionById(productId) || 'Descrição do produto',
-                    price: getProductPriceById(productId) || '0.00',
-                    category: 'albuns',
-                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
-                    icon: getProductIconById(productId) || 'fas fa-heart',
-                    gradient: getProductGradientById(productId) || 'from-rose-light to-rose-medium',
-                    images: [storageImageData],
-                    primarySrc: storageImageData.src // Set the first image as primary
-                };
-                products.push(product);
-                try {
-                    localStorage.setItem('atelieProducts', JSON.stringify(products));
-                    // Update loja.html immediately
-                    updateLojaPage();
-                } catch (error) {
-                    console.warn('Erro ao salvar no localStorage:', error);
-                    showNotification('Erro ao salvar imagem. Tente novamente.', 'error');
-                }
+                localStorage.setItem("atelieProducts", JSON.stringify(products));
             }
-        }
-        
-        // Helper functions to get product data
-        function getProductDescriptionById(productId) {
-            const descriptions = {
-                'default-1': 'Álbum personalizado com detalhes em renda e flores secas. Perfeito para guardar as memórias mais especiais do seu grande dia.',
-                'default-2': 'Álbum para registrar os primeiros momentos do bebê. Cada página é uma nova descoberta e sorriso.',
-                'default-3': 'Kit completo com papéis decorativos, adesivos, fitas e acessórios. Tudo que você precisa para criar memórias únicas.',
-                'default-4': 'Álbum especial para registrar suas aventuras e momentos inesquecíveis de viagem.'
-            };
-            return descriptions[productId] || 'Descrição do produto';
-        }
-        
-        function getProductPriceById(productId) {
-            const prices = {
-                'default-1': '89.90',
-                'default-2': '75.00',
-                'default-3': '45.00',
-                'default-4': '65.00'
-            };
-            return prices[productId] || '0.00';
-        }
-        
-        function getProductIconById(productId) {
-            const icons = {
-                'default-1': 'fas fa-heart',
-                'default-2': 'fas fa-baby',
-                'default-3': 'fas fa-palette',
-                'default-4': 'fas fa-plane'
-            };
-            return icons[productId] || 'fas fa-heart';
-        }
-        
-        function getProductGradientById(productId) {
-            const gradients = {
-                'default-1': 'from-rose-light to-rose-medium',
-                'default-2': 'from-blue-200 to-blue-400',
-                'default-3': 'from-green-200 to-green-400',
-                'default-4': 'from-purple-200 to-purple-400'
-            };
-            return gradients[productId] || 'from-rose-light to-rose-medium';
+
+            showNotification("Imagem removida com sucesso!", "success");
         }
 
-        function removeProductImage(imageId, productId) {
-            if (confirm('Tem certeza que deseja remover esta imagem?')) {
-                removeProductImageFromStorage(imageId, productId);
-                const imageElement = document.querySelector(`[data-image-id="${imageId}"]`);
-                if (imageElement) {
-                    imageElement.remove();
-                }
+        /**
+         * Atualiza o campo primarySrc do produto.
+         */
+        function updateProductImage(productId, newImageSrc) {
+            const products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                product.primarySrc = newImageSrc;
+                if (!product.images) product.images = [];
+                product.images.push({ id: Date.now(), src: newImageSrc });
+                localStorage.setItem("atelieProducts", JSON.stringify(products));
                 
-                // Check if gallery is empty and show empty state
-                const gallery = document.getElementById('productImageGallery');
-                if (gallery.children.length === 0) {
-                    gallery.innerHTML = `
-                        <div class="empty-state col-span-full">
-                            <i class="fas fa-images"></i>
-                            <h4 class="text-lg font-medium mb-2">Nenhuma imagem encontrada</h4>
-                            <p class="text-sm">Adicione imagens para este produto usando o botão acima.</p>
-                        </div>
-                    `;
-                }
-                
-                showNotification('Imagem removida com sucesso!', 'success');
-                updateLojaPage(); // Update the shop page
-            }
-        }
-
-        function removeProductImageFromStorage(imageId, productId) {
-            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            const productIndex = products.findIndex(p => p.id === productId);
-            
-            if (productIndex !== -1 && products[productIndex].images) {
-                // Find the image to be removed
-                const imageToRemove = products[productIndex].images.find(img => img.id === imageId);
-                
-                // Remove the image
-                products[productIndex].images = products[productIndex].images.filter(img => img.id !== imageId);
-                
-                // Update primarySrc if the removed image was the primary
-                if (imageToRemove && products[productIndex].primarySrc === imageToRemove.src) {
-                    if (products[productIndex].images.length > 0) {
-                        // Set the first remaining image as primary
-                        products[productIndex].primarySrc = products[productIndex].images[0].src;
-                    } else {
-                        // No images left, clear primarySrc (will use fallback)
-                        products[productIndex].primarySrc = null;
-                    }
-                }
-                
-                try {
-                    localStorage.setItem('atelieProducts', JSON.stringify(products));
-                } catch (error) {
-                    console.warn('Erro ao remover do localStorage:', error);
-                    showNotification('Erro ao remover imagem. Tente novamente.', 'error');
-                }
-            }
-        }
-
-        // Edit product image function
-        function editProductImage(imageId, productId) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.style.display = 'none';
-            
-            input.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        showNotification('Arquivo muito grande! Máximo 5MB.', 'error');
-                        return;
-                    }
-                    
-                    // Create object URL for immediate display
-                    const objectUrl = URL.createObjectURL(file);
-                    
-                    // Generate new simulated upload URL
-                    const uploadUrl = `uploads/${productId}_${uploadCounter++}_${file.name}`;
-                    
-                    updateProductImage(imageId, productId, uploadUrl, objectUrl, file.name);
-                }
-            });
-            
-            document.body.appendChild(input);
-            input.click();
-            document.body.removeChild(input);
-        }
-
-        // Update product image in storage and UI
-        function updateProductImage(imageId, productId, newSrc, objectUrl, newName) {
-            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            const productIndex = products.findIndex(p => p.id === productId);
-            
-            if (productIndex !== -1 && products[productIndex].images) {
-                const imageIndex = products[productIndex].images.findIndex(img => img.id === imageId);
-                if (imageIndex !== -1) {
-                    const oldSrc = products[productIndex].images[imageIndex].src;
-                    products[productIndex].images[imageIndex].src = newSrc;
-                    products[productIndex].images[imageIndex].name = newName;
-                    products[productIndex].images[imageIndex].updatedAt = new Date().toISOString();
-                    
-                    // Update primarySrc if this was the primary image
-                    if (products[productIndex].primarySrc === oldSrc) {
-                        products[productIndex].primarySrc = newSrc;
-                    }
-                    
-                    try {
-                        localStorage.setItem('atelieProducts', JSON.stringify(products));
-                    } catch (error) {
-                        console.warn('Erro ao salvar no localStorage:', error);
-                        showNotification('Erro ao salvar alteração. Tente novamente.', 'error');
-                        return;
-                    }
-                    
-                    // Update UI
-                    const imageElement = document.querySelector(`[data-image-id="${imageId}"] img`);
-                    if (imageElement) {
-                        imageElement.src = objectUrl; // Use object URL for immediate display
-                        imageElement.alt = newName;
-                    }
-                    
-                    const nameElement = document.querySelector(`[data-image-id="${imageId}"] .truncate`);
-                    if (nameElement) {
-                        nameElement.textContent = newName;
-                    }
-                    
-                    // Update download button
-                    const downloadButton = document.querySelector(`[data-image-id="${imageId}"] .download`);
-                    if (downloadButton) {
-                        downloadButton.onclick = function() {
-                            downloadProductImage(objectUrl, newName);
-                        };
-                    }
-                    
-                    showNotification('Imagem atualizada com sucesso!', 'success');
-                    updateLojaPage(); // Update the shop page
-                }
-            }
-        }
-
-        // Download product image
-        function downloadProductImage(imageSrc, fileName) {
-            // For object URLs, we can download directly
-            if (imageSrc.startsWith('blob:')) {
-                const link = document.createElement('a');
-                link.href = imageSrc;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showNotification('Download iniciado!', 'success');
-            } else {
-                // For simulated URLs, show a message
-                showNotification('Download disponível apenas para imagens recém-carregadas.', 'info');
+                // Update loja.html immediately
+                updateLojaPage();
             }
         }
 
