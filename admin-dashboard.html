@@ -805,17 +805,9 @@
             imageDiv.innerHTML = `
                 <img src="${imageData.src}" alt="${imageData.name}" class="w-full h-32 object-cover rounded-lg">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                    <div class="flex space-x-2">
-                        <button onclick="downloadImage('${imageData.src}', '${imageData.name}')" class="text-white hover:text-blue-400 transition-colors duration-300" title="Download">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button onclick="removeImage(${imageData.id}, this)" class="text-white hover:text-red-400 transition-colors duration-300" title="Remover">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg truncate">
-                    ${imageData.name}
+                    <button class="text-white hover:text-red-400 transition-colors duration-300">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             `;
             imageGallery.appendChild(imageDiv);
@@ -956,29 +948,96 @@
             }
         }
 
+        /**
+         * Adiciona um novo produto na lista e salva no localStorage
+         */
         function addProductToList(productData) {
+            try {
+                // Pega lista atual
+                let products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
+
+                // Garante ID único
+                const newProduct = {
+                    id: Date.now(),
+                    name: productData.name || "Produto sem nome",
+                    description: productData.description || "Sem descrição",
+                    price: productData.price || 0,
+                    category: productData.category || "Outros",
+                    primarySrc: productData.primarySrc || FALLBACK_IMAGE,
+                    images: productData.images || [],
+                    shopeeLink: productData.shopeeLink || "",
+                    status: "Ativo"
+                };
+
+                // Remove produtos duplicados com o mesmo nome (opcional)
+                products = products.filter(p => p.name !== newProduct.name);
+
+                // Adiciona novo produto
+                products.push(newProduct);
+
+                // Verifica espaço disponível antes de salvar
+                const dataString = JSON.stringify(products);
+                if (dataString.length > 4500000) { // ~4.5MB
+                    alert("Limite de armazenamento atingido! Remova produtos ou imagens antigas.");
+                    return;
+                }
+
+                // Salva
+                localStorage.setItem("atelieProducts", dataString);
+
+                // Atualiza UI
+                renderProductList(products);
+                showSuccessMessage("Produto adicionado com sucesso!");
+                
+                // Sincroniza com a loja
+                refreshStoreImages();
+            } catch (e) {
+                console.error("Erro ao adicionar produto:", e);
+                showErrorMessage("Erro ao adicionar produto.");
+            }
+        }
+
+        /**
+         * Renderiza a lista de produtos na tabela.
+         */
+        function renderProductList(products) {
             const tableBody = document.querySelector('#products table tbody');
-            const newRow = document.createElement('tr');
-            newRow.className = 'bg-white border-b';
-            newRow.setAttribute('data-product-id', productData.id || 'default');
-            newRow.innerHTML = `
-                <td class="px-6 py-4 font-medium text-gray-900">${productData.name}</td>
-                <td class="px-6 py-4">R$ ${parseFloat(productData.price).toFixed(2).replace('.', ',')}</td>
-                <td class="px-6 py-4">${getCategoryName(productData.category)}</td>
-                <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Ativo</span></td>
-                <td class="px-6 py-4">
-                    <button onclick="manageProductImages('${productData.id || 'default'}', '${productData.name}')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
-                        <i class="fas fa-images"></i>
-                    </button>
-                    <button onclick="editProduct('${productData.id || 'default'}')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteProduct('${productData.id || 'default'}', this)" class="text-red-600 hover:text-red-900" title="Remover">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tableBody.appendChild(newRow);
+            if (!tableBody) return;
+
+            // Limpa produtos existentes (exceto os padrão)
+            const defaultProductIds = ['default-1', 'default-2', 'default-3'];
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const productId = row.getAttribute('data-product-id');
+                if (!defaultProductIds.includes(productId)) {
+                    row.remove();
+                }
+            });
+
+            // Adiciona produtos do localStorage
+            products.forEach(product => {
+                const newRow = document.createElement('tr');
+                newRow.className = 'bg-white border-b';
+                newRow.setAttribute('data-product-id', product.id);
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-900">${product.name}</td>
+                    <td class="px-6 py-4">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4">${getCategoryName(product.category)}</td>
+                    <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">${product.status || 'Ativo'}</span></td>
+                    <td class="px-6 py-4">
+                        <button onclick="manageProductImages('${product.id}', '${product.name}')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
+                            <i class="fas fa-images"></i>
+                        </button>
+                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteProduct('${product.id}', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(newRow);
+            });
         }
 
         function getCategoryName(category) {
@@ -1005,22 +1064,7 @@
 
         function loadProductsFromStorage() {
             const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            const tableBody = document.querySelector('#products table tbody');
-            
-            // Clear existing products (except the default ones)
-            const defaultProductIds = ['default-1', 'default-2', 'default-3'];
-            const rows = tableBody.querySelectorAll('tr');
-            rows.forEach(row => {
-                const productId = row.getAttribute('data-product-id');
-                if (!defaultProductIds.includes(productId)) {
-                    row.remove();
-                }
-            });
-            
-            // Add products from localStorage
-            products.forEach(product => {
-                addProductToList(product);
-            });
+            renderProductList(products);
         }
 
         function removeProductFromStorage(productId) {
@@ -1324,6 +1368,41 @@
             }
         }
 
+        /**
+         * Atualiza as imagens da loja em tempo real
+         */
+        function refreshStoreImages() {
+            try {
+                // Get updated products from localStorage
+                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                
+                // Update loja.html if it's open in another tab/window
+                if (window.opener && window.opener.location.href.includes('loja.html')) {
+                    window.opener.postMessage({
+                        type: 'REFRESH_STORE_IMAGES',
+                        products: products
+                    }, '*');
+                }
+                
+                // Trigger custom event for same-tab updates
+                window.dispatchEvent(new CustomEvent('storeImagesUpdated', {
+                    detail: { products: products }
+                }));
+                
+                // Trigger storage event for cross-tab updates
+                const event = new StorageEvent('storage', {
+                    key: 'atelieProducts',
+                    newValue: localStorage.getItem('atelieProducts'),
+                    url: window.location.href
+                });
+                window.dispatchEvent(event);
+                
+                console.log('Store images refresh triggered');
+            } catch (error) {
+                console.error('Error refreshing store images:', error);
+            }
+        }
+
         // Handle image loading errors
         function handleImageError(imgElement, imageId) {
             imgElement.style.display = 'none';
@@ -1401,6 +1480,9 @@
             
             // Update product cards directly if loja.html is in the same window
             updateProductCardsInLoja(products);
+            
+            // Call refreshStoreImages for comprehensive update
+            refreshStoreImages();
         }
         
         // Function to update product cards directly in loja.html
