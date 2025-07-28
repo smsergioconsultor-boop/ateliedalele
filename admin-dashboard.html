@@ -1532,11 +1532,19 @@
             // 2. Trigger a refresh of the shop page
             // 3. Update the product cards with new images
             
-            // For now, we'll just show a notification
+            // Show notification
             showNotification('Produto atualizado na loja!', 'success');
             
-            // You could also trigger a custom event for real-time updates
-            // window.dispatchEvent(new CustomEvent('productImagesUpdated'));
+            // Trigger custom event for real-time updates
+            window.dispatchEvent(new CustomEvent('productImagesUpdated'));
+            
+            // Also trigger storage event for cross-tab updates
+            const event = new StorageEvent('storage', {
+                key: 'atelieProducts',
+                newValue: localStorage.getItem('atelieProducts'),
+                url: window.location.href
+            });
+            window.dispatchEvent(event);
         }
 
         // Enhanced notification system

@@ -524,13 +524,14 @@
         });
 
         // Load products from localStorage with improved image handling
-        function loadProducts() {
+        async function loadProducts() {
             const productsGrid = document.getElementById('productsGrid');
             const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
             
             // Default products with verified image paths
             const defaultProducts = [
                 {
+                    id: 'default-1',
                     name: 'Álbum de Casamento',
                     description: 'Álbum personalizado com detalhes em renda e flores secas. Perfeito para guardar as memórias mais especiais do seu grande dia.',
                     price: '89.90',
@@ -541,6 +542,7 @@
                     images: [{ src: 'images/produtos/IMG_5262.JPG' }]
                 },
                 {
+                    id: 'default-2',
                     name: 'Scrapbook Baby',
                     description: 'Álbum para registrar os primeiros momentos do bebê. Cada página é uma nova descoberta e sorriso.',
                     price: '75.00',
@@ -551,6 +553,7 @@
                     images: [{ src: 'images/produtos/26f5.png' }]
                 },
                 {
+                    id: 'default-3',
                     name: 'Kit Scrapbook Completo',
                     description: 'Kit completo com papéis decorativos, adesivos, fitas e acessórios. Tudo que você precisa para criar memórias únicas.',
                     price: '45.00',
@@ -561,6 +564,7 @@
                     images: [{ src: 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg' }]
                 },
                 {
+                    id: 'default-4',
                     name: 'Álbum de Viagem',
                     description: 'Álbum especial para registrar suas aventuras e momentos inesquecíveis de viagem.',
                     price: '65.00',
@@ -572,26 +576,52 @@
                 }
             ];
 
-            // Combine default products with custom products
-            const allProducts = [...defaultProducts, ...products];
+            // Merge admin products with default products
+            const mergedProducts = mergeProductsWithAdminImages(defaultProducts, products);
             
             // Clear grid
             productsGrid.innerHTML = '';
             
-            // Add products to grid
-            allProducts.forEach(product => {
-                const productCard = createProductCard(product);
+            // Add products to grid (async)
+            for (const product of mergedProducts) {
+                const productCard = await createProductCard(product);
                 productsGrid.appendChild(productCard);
+            }
+        }
+        
+        // Merge default products with admin-managed images
+        function mergeProductsWithAdminImages(defaultProducts, adminProducts) {
+            const merged = [...defaultProducts];
+            
+            // For each admin product, update the corresponding default product
+            adminProducts.forEach(adminProduct => {
+                const defaultProductIndex = merged.findIndex(p => p.id === adminProduct.id);
+                
+                if (defaultProductIndex !== -1) {
+                    // Update the default product with admin images
+                    if (adminProduct.images && adminProduct.images.length > 0) {
+                        merged[defaultProductIndex].images = adminProduct.images;
+                    }
+                    // Update other properties if they exist
+                    if (adminProduct.name) merged[defaultProductIndex].name = adminProduct.name;
+                    if (adminProduct.description) merged[defaultProductIndex].description = adminProduct.description;
+                    if (adminProduct.price) merged[defaultProductIndex].price = adminProduct.price;
+                } else {
+                    // Add new product from admin
+                    merged.push(adminProduct);
+                }
             });
+            
+            return merged;
         }
 
         // Função melhorada para criar cards de produtos com sistema robusto de fallback
-        function createProductCard(product) {
+        async function createProductCard(product) {
             const card = document.createElement('div');
             card.className = 'product-card';
             
-            // Configuração de imagens com fallback
-            const imageConfig = getImageConfiguration(product);
+            // Configuração de imagens com fallback (assíncrona)
+            const imageConfig = await getImageConfiguration(product);
             
             card.innerHTML = `
                 <div class="product-image-container">
@@ -634,7 +664,7 @@
         }
 
         // Função para configurar imagens com fallback
-        function getImageConfiguration(product) {
+        async function getImageConfiguration(product) {
             const hasImages = product.images && product.images.length > 0;
             const firstImage = hasImages ? product.images[0] : null;
             
@@ -646,10 +676,69 @@
                 'images/produtos/IMG_5262.JPG'
             ];
             
+            let primarySrc = fallbackImages[0];
+            
+            if (firstImage) {
+                if (firstImage.src.startsWith('uploads/')) {
+                    // É uma URL simulada do admin, tentar usar imagens reais
+                    const realImages = getRealImagesForProduct(product.id);
+                    if (realImages.length > 0) {
+                        const validImage = await getFirstValidImage(realImages);
+                        primarySrc = validImage || fallbackImages[0];
+                    } else {
+                        primarySrc = fallbackImages[0];
+                    }
+                } else {
+                    // É uma imagem real, verificar se existe
+                    const exists = await checkImageExists(firstImage.src);
+                    primarySrc = exists ? firstImage.src : fallbackImages[0];
+                }
+            } else {
+                // Não há imagens do admin, tentar usar imagens padrão do produto
+                const realImages = getRealImagesForProduct(product.id);
+                if (realImages.length > 0) {
+                    const validImage = await getFirstValidImage(realImages);
+                    primarySrc = validImage || fallbackImages[0];
+                }
+            }
+            
             return {
-                primarySrc: firstImage ? firstImage.src : fallbackImages[0],
+                primarySrc: primarySrc,
                 fallbackSrc: fallbackImages[1] || fallbackImages[0]
             };
+        }
+        
+        // Função para obter imagens reais baseadas no ID do produto
+        function getRealImagesForProduct(productId) {
+            const imageMap = {
+                'default-1': ['images/produtos/IMG_5262.JPG', 'images/produtos/IMG_8141.JPG', 'images/produtos/IMG_8142.JPG', 'images/produtos/IMG_8143.JPG', 'images/produtos/IMG_8144.JPG'],
+                'default-2': ['images/produtos/26f5.png', 'images/produtos/IMG_8145.JPG', 'images/produtos/IMG_8146.JPG', 'images/produtos/IMG_8147.JPG', 'images/produtos/IMG_8148.JPG'],
+                'default-3': ['images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg', 'images/produtos/IMG_8149.JPG', 'images/produtos/IMG_8150.JPG', 'images/produtos/IMG_8151.JPG', 'images/produtos/IMG_8152.JPG'],
+                'default-4': ['images/produtos/images.jpg', 'images/produtos/IMG_8153.JPG', 'images/produtos/IMG_8154.JPG', 'images/produtos/IMG_8172.JPG', 'images/produtos/IMG_8173.JPG']
+            };
+            
+            return imageMap[productId] || [];
+        }
+        
+        // Função para verificar se uma imagem existe
+        function checkImageExists(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+        
+        // Função para obter a primeira imagem válida de uma lista
+        async function getFirstValidImage(imageList) {
+            for (const imageUrl of imageList) {
+                const exists = await checkImageExists(imageUrl);
+                if (exists) {
+                    return imageUrl;
+                }
+            }
+            return null;
         }
 
         // Função para lidar com carregamento bem-sucedido da imagem
@@ -693,6 +782,20 @@
 
         // Load products when page loads
         document.addEventListener('DOMContentLoaded', loadProducts);
+        
+        // Listen for storage changes (when admin updates images)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'atelieProducts') {
+                console.log('Produtos atualizados no admin, recarregando loja...');
+                loadProducts();
+            }
+        });
+        
+        // Also listen for custom events (for same-tab updates)
+        window.addEventListener('productImagesUpdated', function() {
+            console.log('Imagens atualizadas, recarregando loja...');
+            loadProducts();
+        });
     </script>
 </body>
 </html>
