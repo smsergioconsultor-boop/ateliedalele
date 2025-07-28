@@ -528,7 +528,10 @@
             const productsGrid = document.getElementById('productsGrid');
             const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
             
-            // Default products with verified image paths
+            // Get list of excluded products to avoid recreating them
+            const excludedProducts = JSON.parse(localStorage.getItem('excludedProducts') || '[]');
+            
+            // Default products with verified image paths (only include non-excluded ones)
             const defaultProducts = [
                 {
                     id: 'default-1',
@@ -574,7 +577,7 @@
                     gradient: 'from-purple-200 to-purple-400',
                     images: [{ src: 'images/produtos/images.jpg' }]
                 }
-            ];
+            ].filter(product => !excludedProducts.includes(product.id)); // Filter out excluded products
 
             // Merge admin products with default products
             const mergedProducts = mergeProductsWithAdminImages(defaultProducts, products);
@@ -994,14 +997,14 @@
             return null;
         }
         
-        // Auto-refresh function to sync with admin changes
+        // Auto-refresh function to sync with admin changes (removed problematic auto-refresh)
         function autoRefreshProducts() {
             console.log('Executando refresh automático dos produtos...');
             loadProducts();
         }
         
-        // Set up auto-refresh every 30 seconds
-        setInterval(autoRefreshProducts, 30000);
+        // Removed problematic auto-refresh that was causing products to reappear
+        // Now only manual refresh and event-based updates are used
         
         // Manual refresh function
         function manualRefreshProducts() {
@@ -1042,6 +1045,20 @@
         // Initialize refresh button when page loads
         document.addEventListener('DOMContentLoaded', function() {
             addRefreshButton();
+            
+            // Listen for storage changes to sync with admin dashboard
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'atelieProducts' || e.key === 'excludedProducts') {
+                    console.log('Dados atualizados, recarregando produtos...');
+                    loadProducts();
+                }
+            });
+            
+            // Listen for custom events from admin dashboard
+            window.addEventListener('storeImagesUpdated', function(e) {
+                console.log('Evento de atualização recebido, recarregando produtos...');
+                loadProducts();
+            });
         });
     </script>
 </body>

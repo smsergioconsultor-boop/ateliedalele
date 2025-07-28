@@ -695,6 +695,24 @@
                         </button>
                     </form>
                 </div>
+
+                <!-- Manutenção Section -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Manutenção do Sistema</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="clearStorageData()" class="bg-red-500 text-white px-4 py-3 rounded-lg hover:bg-red-600 transition-colors duration-300">
+                            <i class="fas fa-trash mr-2"></i>
+                            Limpar Todos os Dados
+                        </button>
+                        <button onclick="restoreExcludedProducts()" class="bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors duration-300">
+                            <i class="fas fa-undo mr-2"></i>
+                            Restaurar Produtos Excluídos
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3">
+                        <strong>Atenção:</strong> A limpeza de dados é irreversível. Use apenas se necessário.
+                    </p>
+                </div>
             </div>
         </main>
     </div>
@@ -1438,8 +1456,18 @@
         function deleteProduct(productId, button) {
             if (productId.startsWith('default-')) {
                 if (confirm('Tem certeza que deseja remover este produto?')) {
+                    // Add to excluded products list to prevent recreation
+                    const excludedProducts = JSON.parse(localStorage.getItem('excludedProducts') || '[]');
+                    if (!excludedProducts.includes(productId)) {
+                        excludedProducts.push(productId);
+                        localStorage.setItem('excludedProducts', JSON.stringify(excludedProducts));
+                    }
+                    
                     button.closest('tr').remove();
                     showSuccessMessage('Produto removido com sucesso!');
+                    
+                    // Sync with loja.html
+                    refreshStoreImages();
                 }
                 return;
             }
@@ -2230,6 +2258,7 @@
                     localStorage.removeItem('atelieProducts');
                     localStorage.removeItem('atelieTestimonials');
                     localStorage.removeItem('atelieImages');
+                    localStorage.removeItem('excludedProducts'); // Also clear excluded products
                     
                     // Recarrega as listas
                     loadProductsFromStorage();
@@ -2240,6 +2269,25 @@
                 } catch (error) {
                     console.error('Erro ao limpar dados:', error);
                     showErrorMessage('Erro ao limpar dados');
+                }
+            }
+        }
+
+        /**
+         * Restaura produtos excluídos (função de manutenção)
+         */
+        function restoreExcludedProducts() {
+            if (confirm('Tem certeza que deseja restaurar todos os produtos excluídos?')) {
+                try {
+                    localStorage.removeItem('excludedProducts');
+                    
+                    // Recarrega as listas
+                    loadProductsFromStorage();
+                    
+                    showSuccessMessage('Produtos excluídos restaurados com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao restaurar produtos:', error);
+                    showErrorMessage('Erro ao restaurar produtos');
                 }
             }
         }
@@ -2741,6 +2789,7 @@
         window.runValidationTests = runValidationTests;
         window.runProductTests = runProductTests;
         window.clearStorageData = clearStorageData;
+        window.restoreExcludedProducts = restoreExcludedProducts;
         window.exportData = exportData;
     </script>
 </body>
