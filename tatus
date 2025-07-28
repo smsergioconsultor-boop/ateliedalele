@@ -1,0 +1,5 @@
+[33mc95bafd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Update admin-dashboard.html
+[33m250c4c4[m fix: simplifica sistema de carregamento de imagens para resolver travamento
+[33m6adef61[m fix: corrige múltiplas chamadas de loadProducts e eventos duplicados
+[33m6002f02[m fix: corrige problema de recriação automática de produtos excluídos
+[33m732fd45[m Correção crítica: Erro de inicialização de constantes - Movidas constantes FALLBACK_IMAGE, STORAGE_LIMIT e PRODUCT_CATEGORIES para o início do script - Removidas chamadas duplicadas de loadProductsFromStorage() - Corrigido erro ReferenceError: Cannot access PRODUCT_CATEGORIES before initialization - Sistema agora inicializa corretamente sem erros
