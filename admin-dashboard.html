@@ -34,6 +34,239 @@
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS for Image Management -->
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* Image Thumbnail Styles */
+        .image-thumbnail {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .image-thumbnail:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .image-thumbnail img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .image-thumbnail-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-thumbnail:hover .image-thumbnail-overlay {
+            opacity: 1;
+        }
+        
+        .image-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .image-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .image-action-btn.edit {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .image-action-btn.edit:hover {
+            background: #2563eb;
+            transform: scale(1.1);
+        }
+        
+        .image-action-btn.delete {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .image-action-btn.delete:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+        
+        .image-action-btn.download {
+            background: #10b981;
+            color: white;
+        }
+        
+        .image-action-btn.download:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+        
+        /* Upload Area Styles */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .upload-area.dragover {
+            border-color: #ec4899;
+            background: #fdf2f8;
+        }
+        
+        .upload-area:hover {
+            border-color: #ec4899;
+            background: #fdf2f8;
+        }
+        
+        /* Loading States */
+        .image-loading {
+            position: relative;
+            background: #f3f4f6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .image-loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* Responsive Grid */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 0.75rem;
+            }
+            
+            .image-thumbnail img {
+                height: 100px;
+            }
+        }
+        
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background: #10b981;
+        }
+        
+        .notification.error {
+            background: #ef4444;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* File Input Styling */
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Check Authentication -->
@@ -255,34 +488,55 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="bg-white border-b">
+                                <tr class="bg-white border-b" data-product-id="default-1">
                                     <td class="px-6 py-4 font-medium text-gray-900">Álbum de Casamento</td>
                                     <td class="px-6 py-4">R$ 89,90</td>
                                     <td class="px-6 py-4">Álbuns</td>
                                     <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Ativo</span></td>
                                     <td class="px-6 py-4">
-                                        <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-                                        <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                        <button onclick="manageProductImages('default-1', 'Álbum de Casamento')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
+                                            <i class="fas fa-images"></i>
+                                        </button>
+                                        <button onclick="editProduct('default-1')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteProduct('default-1', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
-                                <tr class="bg-white border-b">
+                                <tr class="bg-white border-b" data-product-id="default-2">
                                     <td class="px-6 py-4 font-medium text-gray-900">Scrapbook Baby</td>
                                     <td class="px-6 py-4">R$ 75,00</td>
                                     <td class="px-6 py-4">Álbuns</td>
                                     <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Ativo</span></td>
                                     <td class="px-6 py-4">
-                                        <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-                                        <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                        <button onclick="manageProductImages('default-2', 'Scrapbook Baby')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
+                                            <i class="fas fa-images"></i>
+                                        </button>
+                                        <button onclick="editProduct('default-2')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteProduct('default-2', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
-                                <tr class="bg-white border-b">
+                                <tr class="bg-white border-b" data-product-id="default-3">
                                     <td class="px-6 py-4 font-medium text-gray-900">Kit Scrapbook</td>
                                     <td class="px-6 py-4">R$ 45,00</td>
                                     <td class="px-6 py-4">Kits</td>
                                     <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Ativo</span></td>
                                     <td class="px-6 py-4">
-                                        <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-                                        <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                        <button onclick="manageProductImages('default-3', 'Kit Scrapbook')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
+                                            <i class="fas fa-images"></i>
+                                        </button>
+                                        <button onclick="editProduct('default-3')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteProduct('default-3', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -585,19 +839,7 @@
         }
 
         function showErrorMessage(message) {
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    ${message}
-                </div>
-            `;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            showNotification(message, 'error');
         }
 
         // Form handlers
@@ -723,13 +965,13 @@
                 <td class="px-6 py-4">${getCategoryName(productData.category)}</td>
                 <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Ativo</span></td>
                 <td class="px-6 py-4">
-                    <button onclick="manageProductImages(${productData.id || 'null'}, '${productData.name}')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
+                    <button onclick="manageProductImages('${productData.id || 'default'}', '${productData.name}')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
                         <i class="fas fa-images"></i>
                     </button>
-                    <button onclick="editProduct(${productData.id || 'null'})" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                    <button onclick="editProduct('${productData.id || 'default'}')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="deleteProduct(${productData.id || 'null'}, this)" class="text-red-600 hover:text-red-900" title="Remover">
+                    <button onclick="deleteProduct('${productData.id || 'default'}', this)" class="text-red-600 hover:text-red-900" title="Remover">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -748,19 +990,7 @@
         }
 
         function showSuccessMessage(message) {
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    ${message}
-                </div>
-            `;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            showNotification(message, 'success');
         }
 
         // localStorage functions for products
@@ -776,11 +1006,11 @@
             const tableBody = document.querySelector('#products table tbody');
             
             // Clear existing products (except the default ones)
-            const defaultProducts = ['Álbum de Casamento', 'Scrapbook Baby', 'Kit Scrapbook'];
+            const defaultProductIds = ['default-1', 'default-2', 'default-3'];
             const rows = tableBody.querySelectorAll('tr');
             rows.forEach(row => {
-                const productName = row.querySelector('td:first-child').textContent;
-                if (!defaultProducts.includes(productName)) {
+                const productId = row.getAttribute('data-product-id');
+                if (!defaultProductIds.includes(productId)) {
                     row.remove();
                 }
             });
@@ -829,7 +1059,7 @@
         }
 
         function deleteProduct(productId, button) {
-            if (productId === 'null') {
+            if (productId.startsWith('default-')) {
                 if (confirm('Tem certeza que deseja remover este produto?')) {
                     button.closest('tr').remove();
                     showSuccessMessage('Produto removido com sucesso!');
@@ -845,7 +1075,7 @@
         }
 
         function editProduct(productId) {
-            if (productId === 'null') {
+            if (productId.startsWith('default-')) {
                 alert('Produtos padrão não podem ser editados. Adicione um novo produto para editar.');
                 return;
             }
@@ -855,36 +1085,36 @@
         }
 
         function manageProductImages(productId, productName) {
-            if (productId === 'null') {
-                alert('Produtos padrão não podem ter imagens gerenciadas. Adicione um novo produto.');
-                return;
-            }
-
+            // Initialize product images if not exists
+            initializeProductImages(productId);
+            
             const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.className = 'modal-overlay';
             modal.innerHTML = `
-                <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="modal-content p-6 w-full max-w-6xl mx-4">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-semibold text-gray-800">Gerenciar Imagens - ${productName}</h3>
-                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times text-xl"></i>
+                        <h3 class="text-2xl font-semibold text-gray-800">Gerenciar Imagens - ${productName}</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fas fa-times text-2xl"></i>
                         </button>
                     </div>
                     
                     <!-- Upload Area -->
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-6">
-                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-4"></i>
+                    <div class="upload-area mb-6" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
                         <h4 class="text-lg font-medium text-gray-700 mb-2">Adicionar Imagens</h4>
                         <p class="text-gray-500 mb-4">Arraste e solte imagens aqui ou clique para selecionar</p>
-                        <input type="file" id="productImageUpload" multiple accept="image/*" class="hidden">
-                        <button onclick="document.getElementById('productImageUpload').click()" class="bg-rose-medium text-white px-6 py-3 rounded-lg hover:bg-rose-dark transition-colors duration-300">
-                            <i class="fas fa-upload mr-2"></i>
-                            Selecionar Imagens
-                        </button>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="productImageUpload" multiple accept="image/*" class="file-input">
+                            <button class="bg-rose-medium text-white px-6 py-3 rounded-lg hover:bg-rose-dark transition-colors duration-300">
+                                <i class="fas fa-upload mr-2"></i>
+                                Selecionar Imagens
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Image Gallery -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="productImageGallery">
+                    <div class="image-grid" id="productImageGallery">
                         <!-- Images will be loaded here -->
                     </div>
                 </div>
@@ -895,6 +1125,9 @@
             // Load existing images
             loadProductImages(productId);
             
+            // Setup drag and drop
+            setupDragAndDrop(productId);
+            
             // Handle image upload for this product
             document.getElementById('productImageUpload').addEventListener('change', function(e) {
                 const files = e.target.files;
@@ -904,15 +1137,81 @@
             });
         }
 
+        // Initialize product images if not exists
+        function initializeProductImages(productId) {
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            let product = products.find(p => p.id === productId);
+            
+            // If product doesn't exist in localStorage, create it with default images
+            if (!product) {
+                const defaultImages = getDefaultImagesForProduct(productId);
+                product = {
+                    id: productId,
+                    name: getProductNameById(productId),
+                    images: defaultImages
+                };
+                products.push(product);
+                localStorage.setItem('atelieProducts', JSON.stringify(products));
+            }
+            
+            // Ensure images array exists
+            if (!product.images) {
+                product.images = getDefaultImagesForProduct(productId);
+                const productIndex = products.findIndex(p => p.id === productId);
+                if (productIndex !== -1) {
+                    products[productIndex] = product;
+                    localStorage.setItem('atelieProducts', JSON.stringify(products));
+                }
+            }
+        }
+        
+        // Get default images for each product
+        function getDefaultImagesForProduct(productId) {
+            const defaultImages = {
+                'default-1': [
+                    { src: 'images/produtos/IMG_5262.JPG', name: 'Álbum de Casamento - Principal', id: 'default-1-img-1' }
+                ],
+                'default-2': [
+                    { src: 'images/produtos/26f5.png', name: 'Scrapbook Baby - Principal', id: 'default-2-img-1' }
+                ],
+                'default-3': [
+                    { src: 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg', name: 'Kit Scrapbook - Principal', id: 'default-3-img-1' }
+                ]
+            };
+            return defaultImages[productId] || [];
+        }
+        
+        // Get product name by ID
+        function getProductNameById(productId) {
+            const productNames = {
+                'default-1': 'Álbum de Casamento',
+                'default-2': 'Scrapbook Baby',
+                'default-3': 'Kit Scrapbook'
+            };
+            return productNames[productId] || 'Produto';
+        }
+        
         function loadProductImages(productId) {
             const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
             const product = products.find(p => p.id === productId);
             const gallery = document.getElementById('productImageGallery');
             
-            if (product && product.images) {
+            // Clear gallery
+            gallery.innerHTML = '';
+            
+            if (product && product.images && product.images.length > 0) {
                 product.images.forEach(imageData => {
                     addImageToProductGallery(imageData, productId);
                 });
+            } else {
+                // Show empty state
+                gallery.innerHTML = `
+                    <div class="empty-state col-span-full">
+                        <i class="fas fa-images"></i>
+                        <h4 class="text-lg font-medium mb-2">Nenhuma imagem encontrada</h4>
+                        <p class="text-sm">Adicione imagens para este produto usando o botão acima.</p>
+                    </div>
+                `;
             }
         }
 
@@ -920,13 +1219,16 @@
             const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
             
             if (validFiles.length === 0) {
-                showErrorMessage('Nenhuma imagem válida selecionada!');
+                showNotification('Nenhuma imagem válida selecionada!', 'error');
                 return;
             }
 
+            let uploadedCount = 0;
+            const totalFiles = validFiles.length;
+
             validFiles.forEach(file => {
                 if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                    showErrorMessage(`Arquivo ${file.name} é muito grande! Máximo 5MB.`);
+                    showNotification(`Arquivo ${file.name} é muito grande! Máximo 5MB.`, 'error');
                     return;
                 }
 
@@ -935,38 +1237,56 @@
                     const imageData = {
                         src: e.target.result,
                         name: file.name,
-                        id: Date.now() + Math.random()
+                        id: Date.now() + Math.random(),
+                        uploadedAt: new Date().toISOString()
                     };
                     addImageToProductGallery(imageData, productId);
                     saveProductImageToStorage(imageData, productId);
+                    
+                    uploadedCount++;
+                    if (uploadedCount === totalFiles) {
+                        showNotification(`${uploadedCount} imagem(s) adicionada(s) com sucesso!`, 'success');
+                        updateLojaPage(); // Update the shop page
+                    }
                 };
                 reader.readAsDataURL(file);
             });
-
-            showSuccessMessage(`${validFiles.length} imagem(s) adicionada(s) ao produto!`);
         }
 
         function addImageToProductGallery(imageData, productId) {
             const gallery = document.getElementById('productImageGallery');
+            
+            // Remove empty state if exists
+            const emptyState = gallery.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
             const imageDiv = document.createElement('div');
-            imageDiv.className = 'relative group';
+            imageDiv.className = 'image-thumbnail';
             imageDiv.setAttribute('data-image-id', imageData.id);
             imageDiv.innerHTML = `
-                <img src="${imageData.src}" alt="${imageData.name}" class="w-full h-32 object-cover rounded-lg">
-                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                    <div class="flex space-x-2">
-                        <button onclick="downloadImage('${imageData.src}', '${imageData.name}')" class="text-white hover:text-blue-400 transition-colors duration-300" title="Download">
+                <img src="${imageData.src}" alt="${imageData.name}" onload="this.parentElement.classList.remove('image-loading')" onerror="handleImageError(this, '${imageData.id}')">
+                <div class="image-thumbnail-overlay">
+                    <div class="image-actions">
+                        <button onclick="editProductImage('${imageData.id}', '${productId}')" class="image-action-btn edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="downloadProductImage('${imageData.src}', '${imageData.name}')" class="image-action-btn download" title="Download">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button onclick="removeProductImage(${imageData.id}, ${productId}, this)" class="text-white hover:text-red-400 transition-colors duration-300" title="Remover">
+                        <button onclick="removeProductImage('${imageData.id}', '${productId}')" class="image-action-btn delete" title="Excluir">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg truncate">
-                    ${imageData.name}
+                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-2 rounded-b-lg">
+                    <div class="truncate">${imageData.name}</div>
                 </div>
             `;
+            
+            // Add loading class initially
+            imageDiv.classList.add('image-loading');
             gallery.appendChild(imageDiv);
         }
 
@@ -980,14 +1300,40 @@
                 }
                 products[productIndex].images.push(imageData);
                 localStorage.setItem('atelieProducts', JSON.stringify(products));
+            } else {
+                // If product doesn't exist, create it
+                const product = {
+                    id: productId,
+                    name: getProductNameById(productId),
+                    images: [imageData]
+                };
+                products.push(product);
+                localStorage.setItem('atelieProducts', JSON.stringify(products));
             }
         }
 
-        function removeProductImage(imageId, productId, button) {
+        function removeProductImage(imageId, productId) {
             if (confirm('Tem certeza que deseja remover esta imagem?')) {
                 removeProductImageFromStorage(imageId, productId);
-                button.closest('.relative').remove();
-                showSuccessMessage('Imagem removida do produto!');
+                const imageElement = document.querySelector(`[data-image-id="${imageId}"]`);
+                if (imageElement) {
+                    imageElement.remove();
+                }
+                
+                // Check if gallery is empty and show empty state
+                const gallery = document.getElementById('productImageGallery');
+                if (gallery.children.length === 0) {
+                    gallery.innerHTML = `
+                        <div class="empty-state col-span-full">
+                            <i class="fas fa-images"></i>
+                            <h4 class="text-lg font-medium mb-2">Nenhuma imagem encontrada</h4>
+                            <p class="text-sm">Adicione imagens para este produto usando o botão acima.</p>
+                        </div>
+                    `;
+                }
+                
+                showNotification('Imagem removida com sucesso!', 'success');
+                updateLojaPage(); // Update the shop page
             }
         }
 
@@ -999,6 +1345,141 @@
                 products[productIndex].images = products[productIndex].images.filter(img => img.id !== imageId);
                 localStorage.setItem('atelieProducts', JSON.stringify(products));
             }
+        }
+
+        // Edit product image function
+        function editProductImage(imageId, productId) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        showNotification('Arquivo muito grande! Máximo 5MB.', 'error');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        updateProductImage(imageId, productId, e.target.result, file.name);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            document.body.appendChild(input);
+            input.click();
+            document.body.removeChild(input);
+        }
+
+        // Update product image in storage and UI
+        function updateProductImage(imageId, productId, newSrc, newName) {
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const productIndex = products.findIndex(p => p.id === productId);
+            
+            if (productIndex !== -1 && products[productIndex].images) {
+                const imageIndex = products[productIndex].images.findIndex(img => img.id === imageId);
+                if (imageIndex !== -1) {
+                    products[productIndex].images[imageIndex].src = newSrc;
+                    products[productIndex].images[imageIndex].name = newName;
+                    products[productIndex].images[imageIndex].updatedAt = new Date().toISOString();
+                    
+                    localStorage.setItem('atelieProducts', JSON.stringify(products));
+                    
+                    // Update UI
+                    const imageElement = document.querySelector(`[data-image-id="${imageId}"] img`);
+                    if (imageElement) {
+                        imageElement.src = newSrc;
+                        imageElement.alt = newName;
+                    }
+                    
+                    const nameElement = document.querySelector(`[data-image-id="${imageId}"] .truncate`);
+                    if (nameElement) {
+                        nameElement.textContent = newName;
+                    }
+                    
+                    showNotification('Imagem atualizada com sucesso!', 'success');
+                    updateLojaPage(); // Update the shop page
+                }
+            }
+        }
+
+        // Download product image
+        function downloadProductImage(imageSrc, fileName) {
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showNotification('Download iniciado!', 'success');
+        }
+
+        // Handle image loading errors
+        function handleImageError(imgElement, imageId) {
+            imgElement.style.display = 'none';
+            const thumbnail = imgElement.closest('.image-thumbnail');
+            if (thumbnail) {
+                thumbnail.innerHTML = `
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
+                        <div class="text-center text-gray-500">
+                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p class="text-sm">Erro ao carregar</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop(productId) {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleProductImageUpload(files, productId);
+                }
+            });
+        }
+
+        // Update loja.html page when images change
+        function updateLojaPage() {
+            // This function would typically make an AJAX call to update the shop page
+            // For now, we'll just show a notification
+            showNotification('Loja atualizada automaticamente!', 'success');
+        }
+
+        // Enhanced notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
+                    ${message}
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
 
         function showAddTestimonialForm() {
