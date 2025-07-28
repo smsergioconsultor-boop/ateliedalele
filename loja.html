@@ -595,9 +595,9 @@
             // Clear grid
             productsGrid.innerHTML = '';
             
-            // Add products to grid (async)
+            // Add products to grid (simplified)
             for (const product of mergedProducts) {
-                const productCard = await createProductCard(product);
+                const productCard = createProductCard(product);
                 productsGrid.appendChild(productCard);
             }
         }, 100); // 100ms debounce
@@ -629,8 +629,10 @@
             return merged;
         }
 
-        // Função melhorada para criar cards de produtos com sistema robusto de fallback
-        async function createProductCard(product) {
+
+
+        // Função simplificada para criar cards de produtos
+        function createProductCard(product) {
             const card = document.createElement('div');
             card.className = 'product-card';
             
@@ -648,8 +650,8 @@
                 gradient: product.gradient || 'from-rose-light to-rose-medium'
             };
             
-            // Configuração de imagens com fallback (assíncrona)
-            const imageConfig = await getImageConfiguration(product);
+            // Configuração de imagens com fallback (simplificada)
+            const imageConfig = getImageConfiguration(product);
             
             card.innerHTML = `
                 <div class="product-image-container">
@@ -693,80 +695,28 @@
             return card;
         }
 
-        // Função para configurar imagens com fallback
-        async function getImageConfiguration(product) {
+        // Função simplificada para configurar imagens com fallback
+        function getImageConfiguration(product) {
             // Lista de imagens de fallback em ordem de prioridade
             const fallbackImages = [
                 'images/produtos/download.jpg',
                 'images/produtos/26f5.png',
                 'images/produtos/images.jpg',
                 'images/produtos/IMG_5262.JPG',
-                'images/produtos/IMG_8141.JPG' // Adicionar mais opções de fallback
+                'images/produtos/IMG_8141.JPG'
             ];
             
             let primarySrc = fallbackImages[0];
             
             // First, check if product has a primarySrc (from admin)
             if (product.primarySrc) {
-                // Verify if the primarySrc exists
-                const exists = await checkImageExists(product.primarySrc);
-                if (exists) {
-                    primarySrc = product.primarySrc;
-                } else {
-                    // If primarySrc doesn't exist, try to find a valid image
-                    const bestImage = getBestImageForProduct(product);
-                    if (bestImage) {
-                        const bestImageExists = await checkImageExists(bestImage);
-                        if (bestImageExists) {
-                            primarySrc = bestImage;
-                        }
-                    }
-                }
+                primarySrc = product.primarySrc;
+            } else if (product.images && product.images.length > 0) {
+                // Use first image from product
+                primarySrc = product.images[0].src;
             } else {
-                // No primarySrc, check images array
-                const hasImages = product.images && product.images.length > 0;
-                const firstImage = hasImages ? product.images[0] : null;
-                
-                if (firstImage) {
-                    if (firstImage.src.startsWith('uploads/')) {
-                        // É uma URL simulada do admin, tentar usar imagens reais
-                        const realImages = getRealImagesForProduct(product.id);
-                        if (realImages.length > 0) {
-                            const validImage = await getFirstValidImage(realImages);
-                            primarySrc = validImage || fallbackImages[0];
-                        } else {
-                            // Se não há imagens reais, usar fallback
-                            primarySrc = fallbackImages[0];
-                        }
-                    } else {
-                        // É uma imagem real, verificar se existe
-                        const exists = await checkImageExists(firstImage.src);
-                        primarySrc = exists ? firstImage.src : fallbackImages[0];
-                    }
-                } else {
-                    // Não há imagens do admin, tentar usar imagens padrão do produto
-                    const realImages = getRealImagesForProduct(product.id);
-                    if (realImages.length > 0) {
-                        const validImage = await getFirstValidImage(realImages);
-                        primarySrc = validImage || fallbackImages[0];
-                    } else {
-                        // Se não há imagens padrão, usar fallback
-                        primarySrc = fallbackImages[0];
-                    }
-                }
-            }
-            
-            // Garantir que sempre temos uma imagem válida
-            const finalImageExists = await checkImageExists(primarySrc);
-            if (!finalImageExists) {
-                // Se a imagem principal não existe, tentar outras opções
-                for (const fallbackImage of fallbackImages) {
-                    const exists = await checkImageExists(fallbackImage);
-                    if (exists) {
-                        primarySrc = fallbackImage;
-                        break;
-                    }
-                }
+                // Use fallback based on product ID
+                primarySrc = getRealImagesForProduct(product.id);
             }
             
             return {
@@ -775,75 +725,40 @@
             };
         }
         
-        // Função para obter imagens reais baseadas no ID do produto
+        // Função simplificada para obter imagens baseadas no ID do produto
         function getRealImagesForProduct(productId) {
             const imageMap = {
-                'default-1': ['images/produtos/IMG_5262.JPG', 'images/produtos/IMG_8141.JPG', 'images/produtos/IMG_8142.JPG', 'images/produtos/IMG_8143.JPG', 'images/produtos/IMG_8144.JPG'],
-                'default-2': ['images/produtos/26f5.png', 'images/produtos/IMG_8145.JPG', 'images/produtos/IMG_8146.JPG', 'images/produtos/IMG_8147.JPG', 'images/produtos/IMG_8148.JPG'],
-                'default-3': ['images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg', 'images/produtos/IMG_8149.JPG', 'images/produtos/IMG_8150.JPG', 'images/produtos/IMG_8151.JPG', 'images/produtos/IMG_8152.JPG'],
-                'default-4': ['images/produtos/images.jpg', 'images/produtos/IMG_8153.JPG', 'images/produtos/IMG_8154.JPG', 'images/produtos/IMG_8172.JPG', 'images/produtos/IMG_8173.JPG']
+                'default-1': 'images/produtos/IMG_5262.JPG',
+                'default-2': 'images/produtos/26f5.png',
+                'default-3': 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg',
+                'default-4': 'images/produtos/images.jpg'
             };
             
-            return imageMap[productId] || [];
-        }
-        
-        // Função para verificar se uma imagem existe
-        function checkImageExists(url) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = url;
-            });
-        }
-        
-        // Função para obter a primeira imagem válida de uma lista
-        async function getFirstValidImage(imageList) {
-            for (const imageUrl of imageList) {
-                const exists = await checkImageExists(imageUrl);
-                if (exists) {
-                    return imageUrl;
-                }
-            }
-            return null;
+            return imageMap[productId] || 'images/produtos/download.jpg';
         }
 
-        // Função para lidar com carregamento bem-sucedido da imagem
+        // Função simplificada para lidar com carregamento da imagem
         function handleImageLoad(imgElement, productId) {
             const loadingIndicator = document.getElementById(`loading-${productId}`);
             if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
+                loadingIndicator.style.display = 'none';
             }
         }
 
-        // Função para lidar com erro de carregamento da imagem
+        // Função simplificada para lidar com erro de carregamento da imagem
         function handleImageError(imgElement, productId, fallbackSrc, productName, icon, gradient) {
             const loadingIndicator = document.getElementById(`loading-${productId}`);
             const fallbackContent = document.getElementById(`fallback-${productId}`);
             
             // Esconder loading indicator
             if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
+                loadingIndicator.style.display = 'none';
             }
             
-            // Se ainda não tentou o fallback, tenta
-            if (!imgElement.dataset.fallbackAttempted) {
-                imgElement.dataset.fallbackAttempted = 'true';
-                imgElement.src = fallbackSrc;
-                return;
-            }
-            
-            // Se já tentou fallback e falhou, mostra o conteúdo de fallback
+            // Mostrar fallback content
             if (fallbackContent) {
                 imgElement.style.display = 'none';
                 fallbackContent.style.display = 'flex';
-                
-                // Aplica o gradiente específico do produto se disponível
-                if (gradient) {
-                    fallbackContent.style.background = `linear-gradient(135deg, ${gradient.includes('from-') ? 
-                        gradient.replace('from-', '').replace('to-', '') : 
-                        '#fce7f3 0%, #f9a8d4 100%'})`;
-                }
             }
         }
 
