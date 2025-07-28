@@ -1980,23 +1980,15 @@
                 // Update loja.html if it's open in another tab/window
                 if (window.opener && window.opener.location.href.includes('loja.html')) {
                     window.opener.postMessage({
-                        type: 'REFRESH_STORE_IMAGES',
+                        type: 'UPDATE_PRODUCTS',
                         products: products
                     }, '*');
                 }
                 
-                // Trigger custom event for same-tab updates
+                // Trigger custom event for same-tab updates (only one event)
                 window.dispatchEvent(new CustomEvent('storeImagesUpdated', {
                     detail: { products: products }
                 }));
-                
-                // Trigger storage event for cross-tab updates
-                const event = new StorageEvent('storage', {
-                    key: 'atelieProducts',
-                    newValue: localStorage.getItem('atelieProducts'),
-                    url: window.location.href
-                });
-                window.dispatchEvent(event);
                 
                 console.log('Store images refresh triggered');
             } catch (error) {
@@ -2021,31 +2013,15 @@
                     type: 'UPDATE_PRODUCTS',
                     products: products
                 }, '*');
-                
-                // Try to call refreshStoreImages if available
-                if (window.opener.refreshStoreImages) {
-                    window.opener.refreshStoreImages();
-                }
             }
             
-            // Trigger custom event for real-time updates
+            // Trigger custom event for real-time updates (only one event)
             window.dispatchEvent(new CustomEvent('productImagesUpdated', {
                 detail: { products: products }
             }));
             
-            // Also trigger storage event for cross-tab updates
-            const event = new StorageEvent('storage', {
-                key: 'atelieProducts',
-                newValue: localStorage.getItem('atelieProducts'),
-                url: window.location.href
-            });
-            window.dispatchEvent(event);
-            
             // Update product cards directly if loja.html is in the same window
             updateProductCardsInLoja(products);
-            
-            // Call refreshStoreImages for comprehensive update
-            refreshStoreImages();
         }
 
         /**

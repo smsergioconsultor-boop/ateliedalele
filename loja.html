@@ -523,16 +523,26 @@
             });
         });
 
+        // Debounce function to prevent multiple rapid calls
+        let loadProductsTimeout;
+        
         // Load products from localStorage with improved image handling
         async function loadProducts() {
-            const productsGrid = document.getElementById('productsGrid');
-            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            // Clear any pending timeout
+            if (loadProductsTimeout) {
+                clearTimeout(loadProductsTimeout);
+            }
             
-            // Get list of excluded products to avoid recreating them
-            const excludedProducts = JSON.parse(localStorage.getItem('excludedProducts') || '[]');
-            
-            // Default products with verified image paths (only include non-excluded ones)
-            const defaultProducts = [
+            // Debounce the function call
+            loadProductsTimeout = setTimeout(async () => {
+                const productsGrid = document.getElementById('productsGrid');
+                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                
+                // Get list of excluded products to avoid recreating them
+                const excludedProducts = JSON.parse(localStorage.getItem('excludedProducts') || '[]');
+                
+                // Default products with verified image paths (only include non-excluded ones)
+                const defaultProducts = [
                 {
                     id: 'default-1',
                     name: 'Álbum de Casamento',
@@ -590,6 +600,7 @@
                 const productCard = await createProductCard(product);
                 productsGrid.appendChild(productCard);
             }
+        }, 100); // 100ms debounce
         }
         
         // Merge default products with admin-managed images
@@ -836,20 +847,23 @@
             }
         }
 
-        // Load products when page loads
-        document.addEventListener('DOMContentLoaded', loadProducts);
+        // Load products when page loads (only once)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página carregada, carregando produtos...');
+            loadProducts();
+        });
         
         // Listen for storage changes (when admin updates images)
         window.addEventListener('storage', function(e) {
-            if (e.key === 'atelieProducts') {
-                console.log('Produtos atualizados no admin, recarregando loja...');
+            if (e.key === 'atelieProducts' || e.key === 'excludedProducts') {
+                console.log('Dados atualizados no localStorage, recarregando produtos...');
                 loadProducts();
             }
         });
         
         // Also listen for custom events (for same-tab updates)
         window.addEventListener('productImagesUpdated', function(e) {
-            console.log('Imagens atualizadas, recarregando loja...');
+            console.log('Imagens atualizadas, recarregando produtos...');
             if (e.detail && e.detail.products) {
                 updateProductCardsInRealTime(e.detail.products);
             } else {
@@ -863,6 +877,12 @@
                 console.log('Recebida atualização de produtos via postMessage');
                 updateProductCardsInRealTime(e.data.products);
             }
+        });
+        
+        // Listen for custom events from admin dashboard
+        window.addEventListener('storeImagesUpdated', function(e) {
+            console.log('Evento de atualização recebido, recarregando produtos...');
+            loadProducts();
         });
         
         // Function to update product cards in real-time without full reload
@@ -1045,20 +1065,6 @@
         // Initialize refresh button when page loads
         document.addEventListener('DOMContentLoaded', function() {
             addRefreshButton();
-            
-            // Listen for storage changes to sync with admin dashboard
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'atelieProducts' || e.key === 'excludedProducts') {
-                    console.log('Dados atualizados, recarregando produtos...');
-                    loadProducts();
-                }
-            });
-            
-            // Listen for custom events from admin dashboard
-            window.addEventListener('storeImagesUpdated', function(e) {
-                console.log('Evento de atualização recebido, recarregando produtos...');
-                loadProducts();
-            });
         });
     </script>
 </body>
