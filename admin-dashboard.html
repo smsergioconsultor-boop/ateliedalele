@@ -500,7 +500,7 @@
                                         <button onclick="editProduct('default-1')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deleteProduct('default-1', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                                        <button onclick="deleteProduct('default-1')" class="text-red-600 hover:text-red-900" title="Remover">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -517,7 +517,7 @@
                                         <button onclick="editProduct('default-2')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deleteProduct('default-2', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                                        <button onclick="deleteProduct('default-2')" class="text-red-600 hover:text-red-900" title="Remover">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -534,7 +534,7 @@
                                         <button onclick="editProduct('default-3')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deleteProduct('default-3', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                                        <button onclick="deleteProduct('default-3')" class="text-red-600 hover:text-red-900" title="Remover">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -1116,13 +1116,14 @@
         }
 
         /**
-         * Renderiza a lista de produtos na tabela.
+         * Renderiza a lista de produtos na tabela do painel Admin.
+         * Garante que não há duplicações ao redesenhar.
          */
         function renderProductList(products) {
             const tableBody = document.querySelector('#products table tbody');
             if (!tableBody) return;
 
-            // Limpa produtos existentes (exceto os padrão)
+            // Limpa a tabela antes de redesenhar (mantém apenas produtos padrão)
             const defaultProductIds = ['default-1', 'default-2', 'default-3'];
             const rows = tableBody.querySelectorAll('tr');
             rows.forEach(row => {
@@ -1139,8 +1140,8 @@
                 newRow.setAttribute('data-product-id', product.id);
                 newRow.innerHTML = `
                     <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(product.name)}</td>
-                    <td class="px-6 py-4">R$ ${formatPrice(product.price)}</td>
-                    <td class="px-6 py-4">${getCategoryName(product.category)}</td>
+                    <td class="px-6 py-4">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4">${getCategoryName(product.category) || 'Indefinida'}</td>
                     <td class="px-6 py-4">
                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">${product.status || 'Ativo'}</span>
                     </td>
@@ -1155,7 +1156,7 @@
                                 title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteProduct('${product.id}', this)" 
+                        <button onclick="deleteProduct('${product.id}')" 
                                 class="text-red-600 hover:text-red-900 transition-colors duration-200" 
                                 title="Remover">
                             <i class="fas fa-trash"></i>
@@ -1451,9 +1452,9 @@
         }
 
         /**
-         * Exclui produto
+         * Exclui um produto pelo ID e atualiza a tabela e localStorage.
          */
-        function deleteProduct(productId, button) {
+        function deleteProduct(productId) {
             if (productId.startsWith('default-')) {
                 if (confirm('Tem certeza que deseja remover este produto?')) {
                     // Add to excluded products list to prevent recreation
@@ -1463,7 +1464,10 @@
                         localStorage.setItem('excludedProducts', JSON.stringify(excludedProducts));
                     }
                     
-                    button.closest('tr').remove();
+                    // Remove from UI
+                    const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+                    if (row) row.remove();
+                    
                     showSuccessMessage('Produto removido com sucesso!');
                     
                     // Sync with loja.html
@@ -1472,10 +1476,21 @@
                 return;
             }
 
-            if (confirm('Tem certeza que deseja remover este produto?')) {
-                if (removeProductFromStorage(productId)) {
-                    showSuccessMessage('Produto removido com sucesso!');
-                }
+            if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+
+            let products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
+            const productIndex = products.findIndex(p => p.id === productId);
+
+            if (productIndex !== -1) {
+                products.splice(productIndex, 1); // Remove o produto do array
+                localStorage.setItem("atelieProducts", JSON.stringify(products));
+                renderProductList(products);
+                showSuccessMessage("Produto excluído com sucesso!");
+                
+                // Sync with loja.html
+                refreshStoreImages();
+            } else {
+                showErrorMessage("Produto não encontrado!");
             }
         }
 
