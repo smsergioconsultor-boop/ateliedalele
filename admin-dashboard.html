@@ -701,13 +701,21 @@
 
     <!-- JavaScript -->
     <script>
+        // ========================================
+        // CONSTANTES GLOBAIS
+        // ========================================
+        const FALLBACK_IMAGE = "img/fallback.jpg";
+        const STORAGE_LIMIT = 4500000; // ~4.5MB
+        const PRODUCT_CATEGORIES = {
+            'albuns': 'Álbuns',
+            'kits': 'Kits', 
+            'acessorios': 'Acessórios',
+            'personalizados': 'Personalizados',
+            'outros': 'Outros'
+        };
+
         // Set admin user name
         document.getElementById('adminUser').textContent = localStorage.getItem('adminUser') || 'Admin';
-
-        // Initialize products and images from localStorage
-        loadProductsFromStorage();
-        loadImagesFromStorage();
-        loadTestimonialsFromStorage(); // Initialize testimonials
 
         // Navigation
         function showSection(sectionId) {
@@ -948,17 +956,6 @@
         // ========================================
         // SEÇÃO: FUNÇÕES DE PRODUTOS - REFATORADA
         // ========================================
-        
-        // Constantes para produtos
-        const FALLBACK_IMAGE = "img/fallback.jpg";
-        const STORAGE_LIMIT = 4500000; // ~4.5MB
-        const PRODUCT_CATEGORIES = {
-            'albuns': 'Álbuns',
-            'kits': 'Kits', 
-            'acessorios': 'Acessórios',
-            'personalizados': 'Personalizados',
-            'outros': 'Outros'
-        };
 
         /**
          * Valida dados do produto antes de salvar
