@@ -1329,27 +1329,86 @@
                     products[productIndex].images = [];
                 }
                 products[productIndex].images.push(storageImageData);
+                
+                // Ensure product has all required fields
+                products[productIndex].name = products[productIndex].name || getProductNameById(productId) || 'Produto';
+                products[productIndex].description = products[productIndex].description || getProductDescriptionById(productId) || 'Descrição do produto';
+                products[productIndex].price = products[productIndex].price || getProductPriceById(productId) || '0.00';
+                products[productIndex].icon = products[productIndex].icon || getProductIconById(productId) || 'fas fa-heart';
+                products[productIndex].gradient = products[productIndex].gradient || getProductGradientById(productId) || 'from-rose-light to-rose-medium';
+                
                 try {
                     localStorage.setItem('atelieProducts', JSON.stringify(products));
+                    // Update loja.html immediately
+                    updateLojaPage();
                 } catch (error) {
                     console.warn('Erro ao salvar no localStorage:', error);
                     showNotification('Erro ao salvar imagem. Tente novamente.', 'error');
                 }
             } else {
-                // If product doesn't exist, create it
+                // If product doesn't exist, create it with complete data
                 const product = {
                     id: productId,
-                    name: getProductNameById(productId),
+                    name: getProductNameById(productId) || 'Produto',
+                    description: getProductDescriptionById(productId) || 'Descrição do produto',
+                    price: getProductPriceById(productId) || '0.00',
+                    category: 'albuns',
+                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
+                    icon: getProductIconById(productId) || 'fas fa-heart',
+                    gradient: getProductGradientById(productId) || 'from-rose-light to-rose-medium',
                     images: [storageImageData]
                 };
                 products.push(product);
                 try {
                     localStorage.setItem('atelieProducts', JSON.stringify(products));
+                    // Update loja.html immediately
+                    updateLojaPage();
                 } catch (error) {
                     console.warn('Erro ao salvar no localStorage:', error);
                     showNotification('Erro ao salvar imagem. Tente novamente.', 'error');
                 }
             }
+        }
+        
+        // Helper functions to get product data
+        function getProductDescriptionById(productId) {
+            const descriptions = {
+                'default-1': 'Álbum personalizado com detalhes em renda e flores secas. Perfeito para guardar as memórias mais especiais do seu grande dia.',
+                'default-2': 'Álbum para registrar os primeiros momentos do bebê. Cada página é uma nova descoberta e sorriso.',
+                'default-3': 'Kit completo com papéis decorativos, adesivos, fitas e acessórios. Tudo que você precisa para criar memórias únicas.',
+                'default-4': 'Álbum especial para registrar suas aventuras e momentos inesquecíveis de viagem.'
+            };
+            return descriptions[productId] || 'Descrição do produto';
+        }
+        
+        function getProductPriceById(productId) {
+            const prices = {
+                'default-1': '89.90',
+                'default-2': '75.00',
+                'default-3': '45.00',
+                'default-4': '65.00'
+            };
+            return prices[productId] || '0.00';
+        }
+        
+        function getProductIconById(productId) {
+            const icons = {
+                'default-1': 'fas fa-heart',
+                'default-2': 'fas fa-baby',
+                'default-3': 'fas fa-palette',
+                'default-4': 'fas fa-plane'
+            };
+            return icons[productId] || 'fas fa-heart';
+        }
+        
+        function getProductGradientById(productId) {
+            const gradients = {
+                'default-1': 'from-rose-light to-rose-medium',
+                'default-2': 'from-blue-200 to-blue-400',
+                'default-3': 'from-green-200 to-green-400',
+                'default-4': 'from-purple-200 to-purple-400'
+            };
+            return gradients[productId] || 'from-rose-light to-rose-medium';
         }
 
         function removeProductImage(imageId, productId) {
@@ -1527,16 +1586,25 @@
 
         // Update loja.html page when images change
         function updateLojaPage() {
-            // In a real implementation, this would:
-            // 1. Make an AJAX call to update the server
-            // 2. Trigger a refresh of the shop page
-            // 3. Update the product cards with new images
-            
             // Show notification
             showNotification('Produto atualizado na loja!', 'success');
             
+            // Get current products from localStorage
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            
+            // Update loja.html in real-time if it's open
+            if (window.opener && window.opener.location.href.includes('loja.html')) {
+                // If loja.html is open in another tab/window
+                window.opener.postMessage({
+                    type: 'UPDATE_PRODUCTS',
+                    products: products
+                }, '*');
+            }
+            
             // Trigger custom event for real-time updates
-            window.dispatchEvent(new CustomEvent('productImagesUpdated'));
+            window.dispatchEvent(new CustomEvent('productImagesUpdated', {
+                detail: { products: products }
+            }));
             
             // Also trigger storage event for cross-tab updates
             const event = new StorageEvent('storage', {
@@ -1545,6 +1613,68 @@
                 url: window.location.href
             });
             window.dispatchEvent(event);
+            
+            // Update product cards directly if loja.html is in the same window
+            updateProductCardsInLoja(products);
+        }
+        
+        // Function to update product cards directly in loja.html
+        function updateProductCardsInLoja(products) {
+            // Check if we're in the same window as loja.html
+            if (window.location.href.includes('loja.html')) {
+                // We're already in loja.html, update cards directly
+                updateProductCards(products);
+            } else {
+                // Try to find loja.html in the same window
+                const lojaFrame = document.querySelector('iframe[src*="loja.html"]');
+                if (lojaFrame && lojaFrame.contentWindow) {
+                    lojaFrame.contentWindow.postMessage({
+                        type: 'UPDATE_PRODUCTS',
+                        products: products
+                    }, '*');
+                }
+            }
+        }
+        
+        // Function to update product cards with new images
+        function updateProductCards(products) {
+            products.forEach(product => {
+                const productCard = document.querySelector(`[data-product-id="${product.id}"]`);
+                if (productCard) {
+                    const imageElement = productCard.querySelector('.product-image');
+                    if (imageElement && product.images && product.images.length > 0) {
+                        // Get the best available image
+                        const bestImage = getBestImageForProduct(product);
+                        if (bestImage) {
+                            imageElement.src = bestImage;
+                            imageElement.style.display = 'block';
+                            
+                            // Hide fallback content
+                            const fallbackContent = productCard.querySelector('.fallback-content');
+                            if (fallbackContent) {
+                                fallbackContent.style.display = 'none';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to get the best available image for a product
+        function getBestImageForProduct(product) {
+            if (product.images && product.images.length > 0) {
+                // First, try to find a real image (not uploads/ URL)
+                const realImage = product.images.find(img => !img.src.startsWith('uploads/'));
+                if (realImage) {
+                    return realImage.src;
+                }
+                
+                // If no real image, use the first uploaded image
+                return product.images[0].src;
+            }
+            
+            // If no images, return null (will use fallback)
+            return null;
         }
 
         // Enhanced notification system
