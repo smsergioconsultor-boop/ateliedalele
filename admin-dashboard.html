@@ -707,6 +707,7 @@
         // Initialize products and images from localStorage
         loadProductsFromStorage();
         loadImagesFromStorage();
+        loadTestimonialsFromStorage(); // Initialize testimonials
 
         // Navigation
         function showSection(sectionId) {
@@ -830,10 +831,6 @@
             }
         }
 
-        function showErrorMessage(message) {
-            showNotification(message, 'error');
-        }
-
         // Form handlers
         function showAddProductForm() {
             const modal = document.createElement('div');
@@ -948,38 +945,105 @@
             }
         }
 
+        // ========================================
+        // SEÇÃO: FUNÇÕES DE PRODUTOS
+        // ========================================
+        
+        /**
+         * Valida dados do produto antes de salvar
+         */
+        function validateProductData(productData) {
+            const errors = [];
+            
+            // Validação de nome
+            if (!productData.name || productData.name.trim().length < 2) {
+                errors.push("Nome do produto deve ter pelo menos 2 caracteres");
+            }
+            
+            // Validação de preço
+            if (!productData.price || isNaN(parseFloat(productData.price)) || parseFloat(productData.price) <= 0) {
+                errors.push("Preço deve ser um valor válido maior que zero");
+            }
+            
+            // Validação de descrição
+            if (!productData.description || productData.description.trim().length < 10) {
+                errors.push("Descrição deve ter pelo menos 10 caracteres");
+            }
+            
+            // Validação de categoria
+            if (!productData.category || !PRODUCT_CATEGORIES[productData.category]) {
+                errors.push("Categoria deve ser selecionada");
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        /**
+         * Verifica se há espaço suficiente no localStorage
+         */
+        function checkStorageSpace(additionalData = '') {
+            try {
+                const currentData = localStorage.getItem('atelieProducts') || '[]';
+                const testData = currentData + additionalData;
+                return testData.length < STORAGE_LIMIT;
+            } catch (error) {
+                console.error('Erro ao verificar espaço no localStorage:', error);
+                return false;
+            }
+        }
+
+        // ========================================
+        // GESTÃO DE PRODUTOS NO LOCALSTORAGE
+        // ========================================
+        
         /**
          * Adiciona um novo produto na lista e salva no localStorage
          */
         function addProductToList(productData) {
             try {
+                // Valida dados do produto
+                const validation = validateProductData(productData);
+                if (!validation.isValid) {
+                    showErrorMessage(`Erro de validação: ${validation.errors.join(', ')}`);
+                    return false;
+                }
+
                 // Pega lista atual
                 let products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
 
+                // Verifica se já existe produto com mesmo nome
+                const existingProduct = products.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+                if (existingProduct) {
+                    showErrorMessage("Já existe um produto com este nome!");
+                    return false;
+                }
+
                 // Garante ID único
                 const newProduct = {
-                    id: Date.now(),
-                    name: productData.name || "Produto sem nome",
-                    description: productData.description || "Sem descrição",
-                    price: productData.price || 0,
-                    category: productData.category || "Outros",
+                    id: `product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: productData.name.trim(),
+                    description: productData.description.trim(),
+                    price: parseFloat(productData.price),
+                    category: productData.category,
                     primarySrc: productData.primarySrc || FALLBACK_IMAGE,
                     images: productData.images || [],
                     shopeeLink: productData.shopeeLink || "",
-                    status: "Ativo"
+                    status: "Ativo",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 };
-
-                // Remove produtos duplicados com o mesmo nome (opcional)
-                products = products.filter(p => p.name !== newProduct.name);
 
                 // Adiciona novo produto
                 products.push(newProduct);
 
                 // Verifica espaço disponível antes de salvar
                 const dataString = JSON.stringify(products);
-                if (dataString.length > 4500000) { // ~4.5MB
-                    alert("Limite de armazenamento atingido! Remova produtos ou imagens antigas.");
-                    return;
+                if (!checkStorageSpace(dataString)) {
+                    showErrorMessage("Limite de armazenamento atingido! Remova produtos ou imagens antigas.");
+                    return false;
                 }
 
                 // Salva
@@ -991,9 +1055,12 @@
                 
                 // Sincroniza com a loja
                 refreshStoreImages();
+                
+                return true;
             } catch (e) {
                 console.error("Erro ao adicionar produto:", e);
-                showErrorMessage("Erro ao adicionar produto.");
+                showErrorMessage("Erro ao adicionar produto. Tente novamente.");
+                return false;
             }
         }
 
@@ -1017,21 +1084,29 @@
             // Adiciona produtos do localStorage
             products.forEach(product => {
                 const newRow = document.createElement('tr');
-                newRow.className = 'bg-white border-b';
+                newRow.className = 'bg-white border-b hover:bg-gray-50 transition-colors duration-200';
                 newRow.setAttribute('data-product-id', product.id);
                 newRow.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-gray-900">${product.name}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(product.name)}</td>
                     <td class="px-6 py-4">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</td>
                     <td class="px-6 py-4">${getCategoryName(product.category)}</td>
-                    <td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">${product.status || 'Ativo'}</span></td>
                     <td class="px-6 py-4">
-                        <button onclick="manageProductImages('${product.id}', '${product.name}')" class="text-green-600 hover:text-green-900 mr-3" title="Gerenciar Imagens">
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">${product.status || 'Ativo'}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="manageProductImages('${product.id}', '${escapeHtml(product.name)}')" 
+                                class="text-green-600 hover:text-green-900 mr-3 transition-colors duration-200" 
+                                title="Gerenciar Imagens">
                             <i class="fas fa-images"></i>
                         </button>
-                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-900 mr-3" title="Editar">
+                        <button onclick="editProduct('${product.id}')" 
+                                class="text-blue-600 hover:text-blue-900 mr-3 transition-colors duration-200" 
+                                title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteProduct('${product.id}', this)" class="text-red-600 hover:text-red-900" title="Remover">
+                        <button onclick="deleteProduct('${product.id}', this)" 
+                                class="text-red-600 hover:text-red-900 transition-colors duration-200" 
+                                title="Remover">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
@@ -1040,39 +1115,499 @@
             });
         }
 
+        /**
+         * Carrega produtos do localStorage
+         */
+        function loadProductsFromStorage() {
+            try {
+                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                renderProductList(products);
+                console.log(`Carregados ${products.length} produtos do localStorage`);
+            } catch (error) {
+                console.error('Erro ao carregar produtos:', error);
+                showErrorMessage('Erro ao carregar produtos do armazenamento');
+            }
+        }
+
+        /**
+         * Remove produto do localStorage
+         */
+        function removeProductFromStorage(productId) {
+            try {
+                let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                products = products.filter(product => product.id !== productId);
+                localStorage.setItem('atelieProducts', JSON.stringify(products));
+                
+                // Atualiza UI
+                renderProductList(products);
+                
+                // Sincroniza com a loja
+                refreshStoreImages();
+                
+                return true;
+            } catch (error) {
+                console.error('Erro ao remover produto:', error);
+                showErrorMessage('Erro ao remover produto');
+                return false;
+            }
+        }
+
+        /**
+         * Atualiza produto no localStorage
+         */
+        function updateProductInStorage(productId, updatedData) {
+            try {
+                let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                const productIndex = products.findIndex(p => p.id === productId);
+                
+                if (productIndex === -1) {
+                    showErrorMessage('Produto não encontrado');
+                    return false;
+                }
+
+                // Valida dados atualizados
+                const validation = validateProductData(updatedData);
+                if (!validation.isValid) {
+                    showErrorMessage(`Erro de validação: ${validation.errors.join(', ')}`);
+                    return false;
+                }
+
+                // Atualiza produto
+                products[productIndex] = {
+                    ...products[productIndex],
+                    ...updatedData,
+                    updatedAt: new Date().toISOString()
+                };
+
+                localStorage.setItem('atelieProducts', JSON.stringify(products));
+                
+                // Atualiza UI
+                renderProductList(products);
+                
+                // Sincroniza com a loja
+                refreshStoreImages();
+                
+                return true;
+            } catch (error) {
+                console.error('Erro ao atualizar produto:', error);
+                showErrorMessage('Erro ao atualizar produto');
+                return false;
+            }
+        }
+
+        // ========================================
+        // FUNÇÕES AUXILIARES
+        // ========================================
+        
+        /**
+         * Escapa HTML para prevenir XSS
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * Obtém nome da categoria
+         */
         function getCategoryName(category) {
-            const categories = {
-                'albuns': 'Álbuns',
-                'kits': 'Kits',
-                'acessorios': 'Acessórios',
-                'personalizados': 'Personalizados'
-            };
-            return categories[category] || category;
+            return PRODUCT_CATEGORIES[category] || category;
+        }
+
+        /**
+         * Exibe formulário para adicionar produto
+         */
+        function showAddProductForm() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800">Adicionar Novo Produto</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="addProductForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Produto *</label>
+                            <input type="text" name="productName" required minlength="2" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrição *</label>
+                            <textarea name="description" rows="3" required minlength="10" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Preço (R$) *</label>
+                            <input type="number" name="price" step="0.01" min="0.01" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+                            <select name="category" required 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                                <option value="">Selecione uma categoria</option>
+                                <option value="albuns">Álbuns</option>
+                                <option value="kits">Kits</option>
+                                <option value="acessorios">Acessórios</option>
+                                <option value="personalizados">Personalizados</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Link da Shopee</label>
+                            <input type="url" name="shopeeLink" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="closeModal()" 
+                                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                                Cancelar
+                            </button>
+                            <button type="submit" 
+                                    class="bg-rose-medium text-white px-6 py-2 rounded-lg hover:bg-rose-dark transition-colors duration-300">
+                                <i class="fas fa-plus mr-2"></i>
+                                Adicionar Produto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('addProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const productData = {
+                    name: formData.get('productName'),
+                    description: formData.get('description'),
+                    price: formData.get('price'),
+                    category: formData.get('category'),
+                    shopeeLink: formData.get('shopeeLink')
+                };
+                
+                if (addProductToList(productData)) {
+                    closeModal();
+                }
+            });
+        }
+
+        /**
+         * Exclui produto
+         */
+        function deleteProduct(productId, button) {
+            if (productId.startsWith('default-')) {
+                if (confirm('Tem certeza que deseja remover este produto?')) {
+                    button.closest('tr').remove();
+                    showSuccessMessage('Produto removido com sucesso!');
+                }
+                return;
+            }
+
+            if (confirm('Tem certeza que deseja remover este produto?')) {
+                if (removeProductFromStorage(productId)) {
+                    showSuccessMessage('Produto removido com sucesso!');
+                }
+            }
+        }
+
+        /**
+         * Edita produto
+         */
+        function editProduct(productId) {
+            if (productId.startsWith('default-')) {
+                alert('Produtos padrão não podem ser editados. Adicione um novo produto para editar.');
+                return;
+            }
+            
+            // TODO: Implementar formulário de edição
+            alert('Funcionalidade de edição será implementada em breve!');
+        }
+
+        /**
+         * Fecha modal
+         */
+        function closeModal() {
+            const modal = document.querySelector('.fixed.inset-0');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // ========================================
+        // SEÇÃO: FUNÇÕES DE NOTIFICAÇÃO
+        // ========================================
+        
+        /**
+         * Sistema de notificações
+         */
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            if (type === 'warning') icon = 'exclamation-triangle';
+            if (type === 'info') icon = 'info-circle';
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${icon} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
 
         function showSuccessMessage(message) {
             showNotification(message, 'success');
         }
 
-        // localStorage functions for products
-        function saveProductToStorage(productData) {
-            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            productData.id = Date.now(); // Generate unique ID
-            products.push(productData);
-            localStorage.setItem('atelieProducts', JSON.stringify(products));
+        function showErrorMessage(message) {
+            showNotification(message, 'error');
         }
 
-        function loadProductsFromStorage() {
-            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            renderProductList(products);
+        // ========================================
+        // SEÇÃO: FUNÇÕES DE DEPOIMENTOS
+        // ========================================
+        
+        /**
+         * Adiciona depoimento
+         */
+        function addTestimonial(testimonialData) {
+            try {
+                // Valida dados do depoimento
+                const validation = validateTestimonialData(testimonialData);
+                if (!validation.isValid) {
+                    showErrorMessage(`Erro de validação: ${validation.errors.join(', ')}`);
+                    return false;
+                }
+
+                let testimonials = JSON.parse(localStorage.getItem('atelieTestimonials') || '[]');
+                
+                const newTestimonial = {
+                    id: `testimonial_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: testimonialData.name.trim(),
+                    text: testimonialData.text.trim(),
+                    rating: parseInt(testimonialData.rating),
+                    date: new Date().toISOString(),
+                    status: 'Ativo'
+                };
+
+                testimonials.push(newTestimonial);
+                localStorage.setItem('atelieTestimonials', JSON.stringify(testimonials));
+                
+                renderTestimonialsList(testimonials);
+                showSuccessMessage('Depoimento adicionado com sucesso!');
+                
+                return true;
+            } catch (error) {
+                console.error('Erro ao adicionar depoimento:', error);
+                showErrorMessage('Erro ao adicionar depoimento');
+                return false;
+            }
         }
 
-        function removeProductFromStorage(productId) {
-            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            products = products.filter(product => product.id !== productId);
-            localStorage.setItem('atelieProducts', JSON.stringify(products));
+        /**
+         * Valida dados do depoimento
+         */
+        function validateTestimonialData(testimonialData) {
+            const errors = [];
+            
+            if (!testimonialData.name || testimonialData.name.trim().length < 2) {
+                errors.push("Nome deve ter pelo menos 2 caracteres");
+            }
+            
+            if (!testimonialData.text || testimonialData.text.trim().length < 10) {
+                errors.push("Depoimento deve ter pelo menos 10 caracteres");
+            }
+            
+            if (!testimonialData.rating || testimonialData.rating < 1 || testimonialData.rating > 5) {
+                errors.push("Avaliação deve ser entre 1 e 5 estrelas");
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors: errors
+            };
         }
 
+        /**
+         * Renderiza lista de depoimentos
+         */
+        function renderTestimonialsList(testimonials) {
+            const container = document.querySelector('#testimonials-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+            
+            testimonials.forEach(testimonial => {
+                const testimonialDiv = document.createElement('div');
+                testimonialDiv.className = 'bg-white p-4 rounded-lg shadow-md mb-4';
+                testimonialDiv.setAttribute('data-testimonial-id', testimonial.id);
+                
+                const stars = '★'.repeat(testimonial.rating) + '☆'.repeat(5 - testimonial.rating);
+                
+                testimonialDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-gray-800">${escapeHtml(testimonial.name)}</h4>
+                        <div class="flex space-x-2">
+                            <button onclick="editTestimonial('${testimonial.id}')" 
+                                    class="text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteTestimonial('${testimonial.id}')" 
+                                    class="text-red-600 hover:text-red-800 transition-colors duration-200">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-yellow-500 mb-2">${stars}</div>
+                    <p class="text-gray-600 text-sm">${escapeHtml(testimonial.text)}</p>
+                    <div class="text-xs text-gray-400 mt-2">
+                        ${new Date(testimonial.date).toLocaleDateString('pt-BR')}
+                    </div>
+                `;
+                
+                container.appendChild(testimonialDiv);
+            });
+        }
+
+        /**
+         * Carrega depoimentos do localStorage
+         */
+        function loadTestimonialsFromStorage() {
+            try {
+                const testimonials = JSON.parse(localStorage.getItem('atelieTestimonials') || '[]');
+                renderTestimonialsList(testimonials);
+                console.log(`Carregados ${testimonials.length} depoimentos do localStorage`);
+            } catch (error) {
+                console.error('Erro ao carregar depoimentos:', error);
+                showErrorMessage('Erro ao carregar depoimentos do armazenamento');
+            }
+        }
+
+        /**
+         * Remove depoimento
+         */
+        function deleteTestimonial(testimonialId) {
+            if (!confirm('Tem certeza que deseja remover este depoimento?')) return;
+
+            try {
+                let testimonials = JSON.parse(localStorage.getItem('atelieTestimonials') || '[]');
+                testimonials = testimonials.filter(t => t.id !== testimonialId);
+                localStorage.setItem('atelieTestimonials', JSON.stringify(testimonials));
+                
+                renderTestimonialsList(testimonials);
+                showSuccessMessage('Depoimento removido com sucesso!');
+            } catch (error) {
+                console.error('Erro ao remover depoimento:', error);
+                showErrorMessage('Erro ao remover depoimento');
+            }
+        }
+
+        /**
+         * Edita depoimento
+         */
+        function editTestimonial(testimonialId) {
+            // TODO: Implementar formulário de edição
+            alert('Funcionalidade de edição de depoimentos será implementada em breve!');
+        }
+
+        /**
+         * Exibe formulário para adicionar depoimento
+         */
+        function showAddTestimonialForm() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800">Adicionar Depoimento</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="addTestimonialForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                            <input type="text" name="name" required minlength="2" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Depoimento *</label>
+                            <textarea name="text" rows="4" required minlength="10" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Avaliação *</label>
+                            <select name="rating" required 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                                <option value="">Selecione uma avaliação</option>
+                                <option value="5">⭐⭐⭐⭐⭐ (5 estrelas)</option>
+                                <option value="4">⭐⭐⭐⭐☆ (4 estrelas)</option>
+                                <option value="3">⭐⭐⭐☆☆ (3 estrelas)</option>
+                                <option value="2">⭐⭐☆☆☆ (2 estrelas)</option>
+                                <option value="1">⭐☆☆☆☆ (1 estrela)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="closeModal()" 
+                                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                                Cancelar
+                            </button>
+                            <button type="submit" 
+                                    class="bg-rose-medium text-white px-6 py-2 rounded-lg hover:bg-rose-dark transition-colors duration-300">
+                                <i class="fas fa-plus mr-2"></i>
+                                Adicionar Depoimento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('addTestimonialForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const testimonialData = {
+                    name: formData.get('name'),
+                    text: formData.get('text'),
+                    rating: formData.get('rating')
+                };
+                
+                if (addTestimonial(testimonialData)) {
+                    closeModal();
+                }
+            });
+        }
+
+        // ========================================
+        // SEÇÃO: FUNÇÕES DE IMAGENS
+        // ========================================
+        
         // localStorage functions for images
         function saveImageToStorage(imageData) {
             let images = JSON.parse(localStorage.getItem('atelieImages') || '[]');
@@ -1104,32 +1639,13 @@
             localStorage.setItem('atelieImages', JSON.stringify(images));
         }
 
-        function deleteProduct(productId, button) {
-            if (productId.startsWith('default-')) {
-                if (confirm('Tem certeza que deseja remover este produto?')) {
-                    button.closest('tr').remove();
-                    showSuccessMessage('Produto removido com sucesso!');
-                }
-                return;
-            }
-
-            if (confirm('Tem certeza que deseja remover este produto?')) {
-                removeProductFromStorage(productId);
-                button.closest('tr').remove();
-                showSuccessMessage('Produto removido com sucesso!');
-            }
-        }
-
-        function editProduct(productId) {
-            if (productId.startsWith('default-')) {
-                alert('Produtos padrão não podem ser editados. Adicione um novo produto para editar.');
-                return;
-            }
-            
-            // For now, just show a message. In a real app, this would open an edit form
-            alert('Funcionalidade de edição será implementada em breve!');
-        }
-
+        // ========================================
+        // SEÇÃO: FUNÇÕES DE IMAGENS DOS PRODUTOS
+        // ========================================
+        
+        /**
+         * Gerenciar imagens de um produto
+         */
         function manageProductImages(productId, productName) {
             // Initialize product images if not exists
             initializeProductImages(productId);
@@ -1139,7 +1655,7 @@
             modal.innerHTML = `
                 <div class="modal-content p-6 w-full max-w-6xl mx-4">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-2xl font-semibold text-gray-800">Gerenciar Imagens - ${productName}</h3>
+                        <h3 class="text-2xl font-semibold text-gray-800">Gerenciar Imagens - ${escapeHtml(productName)}</h3>
                         <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                             <i class="fas fa-times text-2xl"></i>
                         </button>
@@ -1183,97 +1699,6 @@
             });
         }
 
-        // Initialize product images if not exists
-        function initializeProductImages(productId) {
-            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            let product = products.find(p => p.id === productId);
-            
-            // If product doesn't exist in localStorage, create it with default images
-            if (!product) {
-                const defaultImages = getDefaultImagesForProduct(productId);
-                product = {
-                    id: productId,
-                    name: getProductNameById(productId),
-                    images: defaultImages
-                };
-                products.push(product);
-                try {
-                    localStorage.setItem('atelieProducts', JSON.stringify(products));
-                } catch (error) {
-                    console.warn('Erro ao salvar no localStorage:', error);
-                }
-            }
-            
-            // Ensure images array exists
-            if (!product.images) {
-                product.images = getDefaultImagesForProduct(productId);
-                const productIndex = products.findIndex(p => p.id === productId);
-                if (productIndex !== -1) {
-                    products[productIndex] = product;
-                    try {
-                        localStorage.setItem('atelieProducts', JSON.stringify(products));
-                    } catch (error) {
-                        console.warn('Erro ao salvar no localStorage:', error);
-                    }
-                }
-            }
-        }
-        
-        // Get default images for each product
-        function getDefaultImagesForProduct(productId) {
-            const defaultImages = {
-                'default-1': [
-                    { src: 'images/produtos/IMG_5262.JPG', name: 'Álbum de Casamento - Principal', id: 'default-1-img-1', type: 'default' }
-                ],
-                'default-2': [
-                    { src: 'images/produtos/26f5.png', name: 'Scrapbook Baby - Principal', id: 'default-2-img-1', type: 'default' }
-                ],
-                'default-3': [
-                    { src: 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg', name: 'Kit Scrapbook - Principal', id: 'default-3-img-1', type: 'default' }
-                ]
-            };
-            return defaultImages[productId] || [];
-        }
-        
-        // Get product name by ID
-        function getProductNameById(productId) {
-            const productNames = {
-                'default-1': 'Álbum de Casamento',
-                'default-2': 'Scrapbook Baby',
-                'default-3': 'Kit Scrapbook'
-            };
-            return productNames[productId] || 'Produto';
-        }
-        
-        function loadProductImages(productId) {
-            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            const product = products.find(p => p.id === productId);
-            const gallery = document.getElementById('productImageGallery');
-            
-            // Clear gallery
-            gallery.innerHTML = '';
-            
-            if (product && product.images && product.images.length > 0) {
-                product.images.forEach(imageData => {
-                    addImageToProductGallery(imageData, productId);
-                });
-            } else {
-                // Show empty state
-                gallery.innerHTML = `
-                    <div class="empty-state col-span-full">
-                        <i class="fas fa-images"></i>
-                        <h4 class="text-lg font-medium mb-2">Nenhuma imagem encontrada</h4>
-                        <p class="text-sm">Adicione imagens para este produto usando o botão acima.</p>
-                    </div>
-                `;
-            }
-        }
-
-        // Simulated upload counter for generating unique URLs
-        let uploadCounter = 1;
-        
-        const FALLBACK_IMAGE = "img/fallback.jpg";
-
         /**
          * Faz upload de imagens e atualiza o produto no localStorage.
          */
@@ -1281,6 +1706,14 @@
             const validFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
             if (validFiles.length === 0) {
                 showNotification("Nenhuma imagem válida selecionada!", "error");
+                return;
+            }
+
+            // Verifica tamanho dos arquivos
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            const oversizedFiles = validFiles.filter(file => file.size > maxSize);
+            if (oversizedFiles.length > 0) {
+                showNotification(`Arquivos muito grandes: ${oversizedFiles.map(f => f.name).join(', ')}. Máximo 5MB.`, "error");
                 return;
             }
 
@@ -1293,6 +1726,9 @@
                     updateProductImage(productId, newImageSrc);
                     addImageToProductGallery({ id: Date.now(), src: newImageSrc }, productId);
                     showNotification("Imagem adicionada com sucesso!", "success");
+                };
+                reader.onerror = function() {
+                    showNotification(`Erro ao ler arquivo: ${file.name}`, "error");
                 };
                 reader.readAsDataURL(file);
             });
@@ -1403,47 +1839,9 @@
             }
         }
 
-        // Handle image loading errors
-        function handleImageError(imgElement, imageId) {
-            imgElement.style.display = 'none';
-            const thumbnail = imgElement.closest('.image-thumbnail');
-            if (thumbnail) {
-                thumbnail.innerHTML = `
-                    <div class="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
-                        <div class="text-center text-gray-500">
-                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                            <p class="text-sm">Erro ao carregar</p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // Setup drag and drop functionality
-        function setupDragAndDrop(productId) {
-            const uploadArea = document.getElementById('uploadArea');
-            
-            uploadArea.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.classList.add('dragover');
-            });
-            
-            uploadArea.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                this.classList.remove('dragover');
-            });
-            
-            uploadArea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleProductImageUpload(files, productId);
-                }
-            });
-        }
-
-        // Update loja.html page when images change
+        /**
+         * Update loja.html page when images change
+         */
         function updateLojaPage() {
             // Show notification
             showNotification('Produto atualizado na loja!', 'success');
@@ -1484,8 +1882,10 @@
             // Call refreshStoreImages for comprehensive update
             refreshStoreImages();
         }
-        
-        // Function to update product cards directly in loja.html
+
+        /**
+         * Function to update product cards directly in loja.html
+         */
         function updateProductCardsInLoja(products) {
             // Check if we're in the same window as loja.html
             if (window.location.href.includes('loja.html')) {
@@ -1502,8 +1902,10 @@
                 }
             }
         }
-        
-        // Function to update product cards with new images
+
+        /**
+         * Function to update product cards with new images
+         */
         function updateProductCards(products) {
             products.forEach(product => {
                 const productCard = document.querySelector(`[data-product-id="${product.id}"]`);
@@ -1535,8 +1937,10 @@
                 }
             });
         }
-        
-        // Function to show fallback for a product card
+
+        /**
+         * Function to show fallback for a product card
+         */
         function showFallbackForProduct(productCard) {
             const imageElement = productCard.querySelector('.product-image');
             const fallbackContent = productCard.querySelector('.fallback-content');
@@ -1554,8 +1958,10 @@
                 loadingIndicator.style.display = 'none';
             }
         }
-        
-        // Function to get the best available image for a product
+
+        /**
+         * Function to get the best available image for a product
+         */
         function getBestImageForProduct(product) {
             // First, check if product has a primarySrc
             if (product.primarySrc) {
@@ -1578,39 +1984,367 @@
             return null;
         }
 
-        // Enhanced notification system
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
+        /**
+         * Setup drag and drop functionality
+         */
+        function setupDragAndDrop(productId) {
+            const uploadArea = document.getElementById('uploadArea');
             
-            // Add info icon for info type
-            let icon = 'check-circle';
-            if (type === 'error') icon = 'exclamation-circle';
-            if (type === 'info') icon = 'info-circle';
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
             
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas fa-${icon} mr-2"></i>
-                    ${message}
-                </div>
-            `;
-            document.body.appendChild(notification);
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
             
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleProductImageUpload(files, productId);
+                }
+            });
         }
-        
-        // Clean up object URLs when modal is closed
-        function cleanupObjectUrls() {
-            // This function can be called when modal is closed to free memory
-            // In a real implementation, you'd track object URLs and revoke them
-            console.log('Object URLs cleanup - in a real app, revoke URLs here');
+
+        /**
+         * Handle image loading errors
+         */
+        function handleImageError(imgElement, imageId) {
+            imgElement.style.display = 'none';
+            const thumbnail = imgElement.closest('.image-thumbnail');
+            if (thumbnail) {
+                thumbnail.innerHTML = `
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
+                        <div class="text-center text-gray-500">
+                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p class="text-sm">Erro ao carregar</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function showAddTestimonialForm() {
             alert('Formulário de adicionar depoimento seria exibido aqui!');
         }
+
+        // ========================================
+        // SEÇÃO: CONFIGURAÇÕES GERAIS
+        // ========================================
+        
+        /**
+         * Inicializa o dashboard
+         */
+        function initializeDashboard() {
+            console.log('Inicializando dashboard...');
+            
+            // Carrega dados do localStorage
+            loadProductsFromStorage();
+            loadImagesFromStorage();
+            loadTestimonialsFromStorage();
+            
+            // Adiciona listeners de eventos
+            setupEventListeners();
+            
+            // Executa testes de validação
+            runValidationTests();
+            
+            console.log('Dashboard inicializado com sucesso!');
+        }
+
+        /**
+         * Configura listeners de eventos
+         */
+        function setupEventListeners() {
+            // Storage event listener para sincronização entre abas
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'atelieProducts') {
+                    console.log('Produtos atualizados em outra aba');
+                    loadProductsFromStorage();
+                }
+                if (e.key === 'atelieTestimonials') {
+                    console.log('Depoimentos atualizados em outra aba');
+                    loadTestimonialsFromStorage();
+                }
+            });
+
+            // Custom events para sincronização
+            window.addEventListener('productImagesUpdated', function(e) {
+                console.log('Imagens de produtos atualizadas');
+                loadProductsFromStorage();
+            });
+
+            window.addEventListener('storeImagesUpdated', function(e) {
+                console.log('Imagens da loja atualizadas');
+                loadProductsFromStorage();
+            });
+        }
+
+        /**
+         * Limpa dados do localStorage (função de manutenção)
+         */
+        function clearStorageData() {
+            if (confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
+                try {
+                    localStorage.removeItem('atelieProducts');
+                    localStorage.removeItem('atelieTestimonials');
+                    localStorage.removeItem('atelieImages');
+                    
+                    // Recarrega as listas
+                    loadProductsFromStorage();
+                    loadTestimonialsFromStorage();
+                    loadImagesFromStorage();
+                    
+                    showSuccessMessage('Dados limpos com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao limpar dados:', error);
+                    showErrorMessage('Erro ao limpar dados');
+                }
+            }
+        }
+
+        /**
+         * Exporta dados do localStorage
+         */
+        function exportData() {
+            try {
+                const data = {
+                    products: JSON.parse(localStorage.getItem('atelieProducts') || '[]'),
+                    testimonials: JSON.parse(localStorage.getItem('atelieTestimonials') || '[]'),
+                    images: JSON.parse(localStorage.getItem('atelieImages') || '[]'),
+                    exportDate: new Date().toISOString()
+                };
+                
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `atelie-data-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                showSuccessMessage('Dados exportados com sucesso!');
+            } catch (error) {
+                console.error('Erro ao exportar dados:', error);
+                showErrorMessage('Erro ao exportar dados');
+            }
+        }
+
+        // ========================================
+        // SEÇÃO: VALIDAÇÃO E TESTES
+        // ========================================
+        
+        /**
+         * Executa testes de validação
+         */
+        function runValidationTests() {
+            console.log('Executando testes de validação...');
+            
+            const tests = [
+                testProductsSection,
+                testImagesSection,
+                testTestimonialsSection,
+                testStorageLimits,
+                testUIElements
+            ];
+            
+            let passedTests = 0;
+            let totalTests = tests.length;
+            
+            tests.forEach(test => {
+                try {
+                    if (test()) {
+                        passedTests++;
+                        console.log(`✅ ${test.name} - PASSOU`);
+                    } else {
+                        console.log(`❌ ${test.name} - FALHOU`);
+                    }
+                } catch (error) {
+                    console.log(`❌ ${test.name} - ERRO: ${error.message}`);
+                }
+            });
+            
+            console.log(`\n📊 RESULTADO DOS TESTES: ${passedTests}/${totalTests} testes passaram`);
+            
+            if (passedTests === totalTests) {
+                console.log('🎉 Todos os testes passaram! Sistema funcionando corretamente.');
+            } else {
+                console.log('⚠️ Alguns testes falharam. Verifique os logs acima.');
+            }
+        }
+
+        /**
+         * Testa seção de produtos
+         */
+        function testProductsSection() {
+            // Testa se as funções existem
+            if (typeof addProductToList !== 'function') return false;
+            if (typeof renderProductList !== 'function') return false;
+            if (typeof validateProductData !== 'function') return false;
+            
+            // Testa validação de dados
+            const testProduct = {
+                name: 'Teste',
+                description: 'Descrição de teste com mais de 10 caracteres',
+                price: '10.00',
+                category: 'albuns'
+            };
+            
+            const validation = validateProductData(testProduct);
+            if (!validation.isValid) return false;
+            
+            // Testa se a tabela existe
+            const table = document.querySelector('#products table tbody');
+            if (!table) return false;
+            
+            return true;
+        }
+
+        /**
+         * Testa seção de imagens
+         */
+        function testImagesSection() {
+            // Testa se as funções existem
+            if (typeof handleProductImageUpload !== 'function') return false;
+            if (typeof addImageToProductGallery !== 'function') return false;
+            if (typeof removeProductImage !== 'function') return false;
+            
+            // Testa se o fallback está definido
+            if (typeof FALLBACK_IMAGE === 'undefined') return false;
+            
+            return true;
+        }
+
+        /**
+         * Testa seção de depoimentos
+         */
+        function testTestimonialsSection() {
+            // Testa se as funções existem
+            if (typeof addTestimonial !== 'function') return false;
+            if (typeof renderTestimonialsList !== 'function') return false;
+            if (typeof validateTestimonialData !== 'function') return false;
+            
+            // Testa validação de dados
+            const testTestimonial = {
+                name: 'Teste',
+                text: 'Depoimento de teste com mais de 10 caracteres',
+                rating: '5'
+            };
+            
+            const validation = validateTestimonialData(testTestimonial);
+            if (!validation.isValid) return false;
+            
+            return true;
+        }
+
+        /**
+         * Testa limites de storage
+         */
+        function testStorageLimits() {
+            // Testa se a função de verificação existe
+            if (typeof checkStorageSpace !== 'function') return false;
+            
+            // Testa se o limite está definido
+            if (typeof STORAGE_LIMIT === 'undefined') return false;
+            
+            // Testa se o localStorage está disponível
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+            } catch (error) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        /**
+         * Testa elementos da UI
+         */
+        function testUIElements() {
+            // Testa se as funções de notificação existem
+            if (typeof showNotification !== 'function') return false;
+            if (typeof showSuccessMessage !== 'function') return false;
+            if (typeof showErrorMessage !== 'function') return false;
+            
+            // Testa se as funções de modal existem
+            if (typeof closeModal !== 'function') return false;
+            if (typeof showAddProductForm !== 'function') return false;
+            if (typeof showAddTestimonialForm !== 'function') return false;
+            
+            return true;
+        }
+
+        /**
+         * Função de diagnóstico do sistema
+         */
+        function diagnoseSystem() {
+            console.log('🔍 DIAGNÓSTICO DO SISTEMA');
+            console.log('========================');
+            
+            // Verifica localStorage
+            console.log('\n📦 LOCALSTORAGE:');
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const testimonials = JSON.parse(localStorage.getItem('atelieTestimonials') || '[]');
+            const images = JSON.parse(localStorage.getItem('atelieImages') || '[]');
+            
+            console.log(`- Produtos: ${products.length}`);
+            console.log(`- Depoimentos: ${testimonials.length}`);
+            console.log(`- Imagens: ${images.length}`);
+            
+            // Verifica tamanho dos dados
+            const totalSize = JSON.stringify(products).length + 
+                            JSON.stringify(testimonials).length + 
+                            JSON.stringify(images).length;
+            console.log(`- Tamanho total: ${(totalSize / 1024).toFixed(2)} KB`);
+            console.log(`- Limite: ${(STORAGE_LIMIT / 1024 / 1024).toFixed(2)} MB`);
+            
+            // Verifica elementos da UI
+            console.log('\n🎨 ELEMENTOS DA UI:');
+            const productTable = document.querySelector('#products table tbody');
+            const testimonialsList = document.querySelector('#testimonials-list');
+            const imagesGrid = document.querySelector('#images .grid');
+            
+            console.log(`- Tabela de produtos: ${productTable ? '✅' : '❌'}`);
+            console.log(`- Lista de depoimentos: ${testimonialsList ? '✅' : '❌'}`);
+            console.log(`- Grid de imagens: ${imagesGrid ? '✅' : '❌'}`);
+            
+            // Verifica funções
+            console.log('\n⚙️ FUNÇÕES:');
+            const functions = [
+                'addProductToList', 'renderProductList', 'validateProductData',
+                'handleProductImageUpload', 'addImageToProductGallery', 'removeProductImage',
+                'addTestimonial', 'renderTestimonialsList', 'validateTestimonialData',
+                'showNotification', 'showSuccessMessage', 'showErrorMessage',
+                'closeModal', 'checkStorageSpace'
+            ];
+            
+            functions.forEach(funcName => {
+                const exists = typeof window[funcName] === 'function';
+                console.log(`- ${funcName}: ${exists ? '✅' : '❌'}`);
+            });
+            
+            console.log('\n🎯 DIAGNÓSTICO CONCLUÍDO');
+        }
+
+        // ========================================
+        // INICIALIZAÇÃO
+        // ========================================
+        
+        // Inicializa o dashboard quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+
+        // Função global para diagnóstico (pode ser chamada no console)
+        window.diagnoseSystem = diagnoseSystem;
+        window.runValidationTests = runValidationTests;
+        window.clearStorageData = clearStorageData;
+        window.exportData = exportData;
     </script>
 </body>
 </html> 
