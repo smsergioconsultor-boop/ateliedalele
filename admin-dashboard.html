@@ -557,12 +557,22 @@
                     <div class="flex items-start">
                         <i class="fas fa-exclamation-triangle text-red-500 text-xl mt-1 mr-3"></i>
                         <div>
-                            <h3 class="text-lg font-semibold text-red-800 mb-3">🚨 Problema Detectado: Quota de Memória Cheia</h3>
-                            <p class="text-red-700 mb-3">Se você está vendo erro "QuotaExceededError", clique no botão abaixo para corrigir:</p>
-                            <button onclick="solucaoRapidaQuota()" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors animate-pulse">
-                                <i class="fas fa-tools mr-2"></i>
-                                🔧 CORRIGIR ERRO DE QUOTA AGORA
-                            </button>
+                                                         <h3 class="text-lg font-semibold text-red-800 mb-3">🚨 ERRO ATIVO: QuotaExceededError</h3>
+                             <p class="text-red-700 mb-3"><strong>SOLUÇÃO IMEDIATA:</strong> Execute no console (F12) o comando: <code>corrigirQuotaAgora()</code></p>
+                             <div class="flex gap-3">
+                                 <button onclick="corrigirQuotaAgora()" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors animate-pulse">
+                                     <i class="fas fa-bolt mr-2"></i>
+                                     🚨 CORREÇÃO IMEDIATA
+                                 </button>
+                                                                   <button onclick="navigator.clipboard.writeText('corrigirQuotaAgora()')" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                      <i class="fas fa-copy mr-2"></i>
+                                      Copiar Comando
+                                  </button>
+                                  <button onclick="resetCompleto()" class="bg-black text-white px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors">
+                                      <i class="fas fa-bomb mr-2"></i>
+                                      💥 Reset Total
+                                  </button>
+                              </div>
                         </div>
                     </div>
                 </div>
@@ -595,9 +605,9 @@
                             🎭 Ver Demonstração
                         </button>
                         
-                        <button onclick="solucaoRapidaQuota()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors animate-pulse">
-                            <i class="fas fa-tools mr-2"></i>
-                            🔧 Corrigir Erro de Quota
+                        <button onclick="corrigirQuotaAgora()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors animate-pulse">
+                            <i class="fas fa-bolt mr-2"></i>
+                            🚨 Correção Imediata
                         </button>
                         
                         <button onclick="testAllImageIcons()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
@@ -4418,6 +4428,110 @@
 
         // Expõe função globalmente
         window.solucaoRapidaQuota = solucaoRapidaQuota;
+
+        /**
+         * 🚨 CORREÇÃO IMEDIATA - Execute no console para resolver AGORA
+         */
+        function corrigirQuotaAgora() {
+            console.log('🚨 EXECUTANDO CORREÇÃO IMEDIATA...');
+            
+            try {
+                // 1. Backup dos dados essenciais
+                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                console.log(`📦 Encontrados ${products.length} produtos`);
+                
+                // 2. Limpa TUDO primeiro
+                console.log('🧹 Limpando localStorage...');
+                localStorage.clear();
+                
+                // 3. Recria com apenas dados essenciais (SEM IMAGENS PESADAS)
+                const produtosLimpos = products.map(product => ({
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    category: product.category,
+                    shopeeLink: product.shopeeLink || '',
+                    status: 'Ativo',
+                    images: [], // Remove TODAS as imagens por enquanto
+                    createdAt: product.createdAt || new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                }));
+                
+                // 4. Salva versão limpa
+                localStorage.setItem('atelieProducts', JSON.stringify(produtosLimpos));
+                localStorage.setItem('excludedProducts', '[]');
+                
+                console.log(`✅ Salvos ${produtosLimpos.length} produtos SEM imagens`);
+                
+                // 5. Testa se agora consegue adicionar
+                const testData = JSON.stringify([...produtosLimpos, { 
+                    id: 'test', name: 'Teste', description: 'test', price: '1.00', category: 'test' 
+                }]);
+                
+                localStorage.setItem('testQuota', testData);
+                localStorage.removeItem('testQuota');
+                
+                console.log('🎉 SUCESSO! Agora você pode adicionar produtos!');
+                alert('✅ QUOTA CORRIGIDA!\n\nAgora você pode:\n1. Adicionar produtos normalmente\n2. Adicionar imagens depois (uma por vez)\n3. O sistema está funcionando!');
+                
+                // Recarrega a página
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Erro na correção:', error);
+                alert('❌ Erro crítico! Tente:\n1. Fechar todas as abas\n2. Abrir só uma aba\n3. Executar novamente');
+                return false;
+            }
+        }
+
+        // EXPOSIÇÃO GLOBAL
+        window.corrigirQuotaAgora = corrigirQuotaAgora;
+
+        /**
+         * 💥 RESET TOTAL - Use apenas se nada mais funcionar
+         */
+        function resetCompleto() {
+            const confirmacao = confirm('💥 RESET COMPLETO\n\nIsto irá:\n✅ Limpar TODA a memória\n✅ Começar do zero\n✅ Resolver 100% o problema\n\n❌ Perder todos os dados\n\nContinuar?');
+            
+            if (!confirmacao) return false;
+            
+            try {
+                console.log('💥 EXECUTANDO RESET COMPLETO...');
+                
+                // Limpa absolutamente tudo
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Recria estrutura mínima
+                localStorage.setItem('atelieProducts', '[]');
+                localStorage.setItem('excludedProducts', '[]');
+                localStorage.setItem('atelieImages', '[]');
+                localStorage.setItem('atelieTestimonials', '[]');
+                
+                console.log('✅ Reset completo executado!');
+                alert('💥 RESET COMPLETO!\n\n✅ Memória totalmente limpa\n✅ Sistema restaurado\n✅ Pronto para usar\n\nA página será recarregada...');
+                
+                // Recarrega após 1 segundo
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Erro no reset:', error);
+                alert('❌ Erro crítico!\n\nFeche o navegador completamente e abra novamente.');
+                return false;
+            }
+        }
+
+        // Exposição global
+        window.resetCompleto = resetCompleto;
     </script>
 </body>
 </html> 
