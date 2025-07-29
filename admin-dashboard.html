@@ -64,6 +64,45 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button onclick="toggleDebugMenu()" class="text-gray-600 hover:text-gray-900 flex items-center">
+                            <i class="fas fa-tools mr-1"></i>
+                            Debug
+                            <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        
+                        <!-- Debug Menu -->
+                        <div id="debugMenu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50">
+                            <div class="py-2">
+                                <button onclick="debugStorage()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-search mr-2 text-blue-500"></i>
+                                    Analisar Storage
+                                </button>
+                                <button onclick="identifyProblematicProducts()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-exclamation-triangle mr-2 text-orange-500"></i>
+                                    Identificar Problemas
+                                </button>
+                                <button onclick="fixProductsStatus()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                                    Corrigir Status
+                                </button>
+                                <button onclick="cleanDuplicateProducts()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-broom mr-2 text-yellow-500"></i>
+                                    Limpar Duplicados
+                                </button>
+                                <button onclick="clearAllTestProducts()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-trash mr-2 text-red-500"></i>
+                                    Remover Testes
+                                </button>
+                                <hr class="my-2">
+                                <button onclick="resetToDefaults()" class="w-full text-left px-4 py-2 hover:bg-red-50 text-sm text-red-600">
+                                    <i class="fas fa-bomb mr-2"></i>
+                                    Reset Total
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button onclick="showStorageInfo()" class="text-gray-600 hover:text-gray-900">
                         <i class="fas fa-info-circle"></i>
                         Storage
@@ -357,6 +396,40 @@
                     updatedAt: new Date().toISOString()
                 }
             ];
+        }
+        
+        // Função para identificar produtos problemáticos
+        function identifyProblematicProducts() {
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            
+            const problemas = {
+                semStatus: products.filter(p => !p.status),
+                duplicados: [],
+                testes: products.filter(p => p.name.toLowerCase().startsWith('teste') || p.name.toLowerCase().startsWith('test'))
+            };
+            
+            // Identifica duplicados
+            const nomes = {};
+            products.forEach(product => {
+                const nome = product.name.toLowerCase().trim();
+                if (nomes[nome]) {
+                    problemas.duplicados.push(product);
+                } else {
+                    nomes[nome] = true;
+                }
+            });
+            
+            console.log('🔍 PROBLEMAS IDENTIFICADOS:');
+            console.log('❓ Produtos sem status:', problemas.semStatus.length);
+            console.log('🔄 Produtos duplicados:', problemas.duplicados.length);
+            console.log('🧪 Produtos de teste:', problemas.testes.length);
+            
+            if (problemas.semStatus.length > 0) {
+                console.log('⚠️ Produtos sem status (NÃO aparecem na loja):');
+                console.table(problemas.semStatus.map(p => ({ id: p.id, name: p.name, status: p.status })));
+            }
+            
+            return problemas;
         }
 
         // ==========================================
@@ -1024,6 +1097,180 @@
         function openStore() {
             window.open('loja.html', '_blank');
         }
+        
+        // ==========================================
+        // FERRAMENTAS DE DEBUG E LIMPEZA
+        // ==========================================
+        
+        function debugStorage() {
+            console.log('🔍 DEBUG STORAGE:');
+            
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            console.log('📦 Total de produtos:', products.length);
+            
+            console.table(products.map(p => ({
+                id: p.id,
+                name: p.name,
+                status: p.status,
+                category: p.category,
+                price: p.price,
+                images: p.images?.length || 0
+            })));
+            
+            // Mostra produtos ativos vs inativos
+            const ativos = products.filter(p => p.status === 'ativo').length;
+            const inativos = products.filter(p => p.status === 'inativo').length;
+            const semStatus = products.filter(p => !p.status).length;
+            
+            console.log(`✅ Ativos: ${ativos}`);
+            console.log(`❌ Inativos: ${inativos}`);
+            console.log(`❓ Sem status: ${semStatus}`);
+            
+            if (semStatus > 0) {
+                console.warn('⚠️ PROBLEMA: Produtos sem status definido não aparecem na loja!');
+            }
+            
+            return products;
+        }
+        
+        function fixProductsStatus() {
+            console.log('🔧 Corrigindo status dos produtos...');
+            
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            let fixed = 0;
+            
+            products = products.map(product => {
+                if (!product.status) {
+                    product.status = 'ativo';
+                    fixed++;
+                    console.log(`✅ Produto "${product.name}" definido como ativo`);
+                }
+                return product;
+            });
+            
+            if (fixed > 0) {
+                saveProducts(products);
+                renderProducts();
+                showNotification(`${fixed} produto(s) com status corrigido!`, 'success');
+                console.log(`🎉 ${fixed} produtos corrigidos!`);
+            } else {
+                console.log('✅ Todos os produtos já têm status definido');
+                showNotification('Todos os produtos já têm status definido.', 'info');
+            }
+            
+            return products;
+        }
+        
+        function cleanDuplicateProducts() {
+            console.log('🧹 Limpando produtos duplicados...');
+            
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const originalLength = products.length;
+            
+            // Remove duplicados baseado no nome
+            const seen = new Set();
+            products = products.filter(product => {
+                const key = product.name.toLowerCase().trim();
+                if (seen.has(key)) {
+                    console.log(`🗑️ Removendo duplicado: "${product.name}"`);
+                    return false;
+                }
+                seen.add(key);
+                return true;
+            });
+            
+            const removed = originalLength - products.length;
+            
+            if (removed > 0) {
+                saveProducts(products);
+                renderProducts();
+                showNotification(`${removed} produto(s) duplicado(s) removido(s)!`, 'success');
+                console.log(`🎉 ${removed} duplicados removidos!`);
+            } else {
+                console.log('✅ Nenhum duplicado encontrado');
+                showNotification('Nenhum produto duplicado encontrado.', 'info');
+            }
+            
+            return products;
+        }
+        
+        function clearAllTestProducts() {
+            if (!confirm('❓ Deseja remover TODOS os produtos de teste (que começam com "teste", "Teste" ou "test")?')) {
+                return;
+            }
+            
+            console.log('🗑️ Removendo produtos de teste...');
+            
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const originalLength = products.length;
+            
+            products = products.filter(product => {
+                const name = product.name.toLowerCase();
+                const isTest = name.startsWith('teste') || name.startsWith('test');
+                
+                if (isTest) {
+                    console.log(`🗑️ Removendo teste: "${product.name}"`);
+                    return false;
+                }
+                return true;
+            });
+            
+            const removed = originalLength - products.length;
+            
+            if (removed > 0) {
+                saveProducts(products);
+                renderProducts();
+                showNotification(`${removed} produto(s) de teste removido(s)!`, 'success');
+                console.log(`🎉 ${removed} produtos de teste removidos!`);
+            } else {
+                console.log('✅ Nenhum produto de teste encontrado');
+                showNotification('Nenhum produto de teste encontrado.', 'info');
+            }
+            
+            return products;
+        }
+        
+        function resetToDefaults() {
+            if (!confirm('💥 ATENÇÃO: Isso irá APAGAR TODOS os produtos e restaurar apenas os padrão. Continuar?')) {
+                return;
+            }
+            
+            console.log('💥 Resetando para produtos padrão...');
+            
+            const defaultProducts = getDefaultProducts();
+            saveProducts(defaultProducts);
+            renderProducts();
+            
+            showNotification('Sistema resetado para produtos padrão!', 'success');
+            console.log('🎉 Reset completo realizado!');
+            
+            return defaultProducts;
+        }
+        
+        // Controle do menu debug
+        function toggleDebugMenu() {
+            const menu = document.getElementById('debugMenu');
+            menu.classList.toggle('hidden');
+        }
+        
+        // Fecha menu debug ao clicar fora
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('debugMenu');
+            const button = e.target.closest('[onclick*="toggleDebugMenu"]');
+            
+            if (!button && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+        
+        // Exposição global das funções de debug
+        window.debugStorage = debugStorage;
+        window.fixProductsStatus = fixProductsStatus;
+        window.cleanDuplicateProducts = cleanDuplicateProducts;
+        window.clearAllTestProducts = clearAllTestProducts;
+        window.resetToDefaults = resetToDefaults;
+        window.toggleDebugMenu = toggleDebugMenu;
+        window.identifyProblematicProducts = identifyProblematicProducts;
 
         // ==========================================
         // INICIALIZAÇÃO DA APLICAÇÃO
