@@ -526,108 +526,215 @@
         // Debounce function to prevent multiple rapid calls
         let loadProductsTimeout;
         
-        // Load products from localStorage with improved image handling
+        // 🚀 SISTEMA SIMPLIFICADO - Sincronizado com novo admin
         async function loadProducts() {
-            // Clear any pending timeout
-            if (loadProductsTimeout) {
-                clearTimeout(loadProductsTimeout);
-            }
+            console.log('🔄 Carregando produtos do novo sistema...');
             
-            // Debounce the function call
-            loadProductsTimeout = setTimeout(async () => {
-                const productsGrid = document.getElementById('productsGrid');
-                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const productsGrid = document.getElementById('productsGrid');
+            
+            try {
+                // Carrega produtos do localStorage (mesmo sistema do admin)
+                let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
                 
-                // Get list of excluded products to avoid recreating them
-                const excludedProducts = JSON.parse(localStorage.getItem('excludedProducts') || '[]');
+                // Se não houver produtos salvos, usar produtos padrão
+                if (products.length === 0) {
+                    products = getDefaultProducts();
+                    // Salva os produtos padrão para sincronizar
+                    localStorage.setItem('atelieProducts', JSON.stringify(products));
+                }
                 
-                // Default products with verified image paths (only include non-excluded ones)
-                const defaultProducts = [
+                // Filtra apenas produtos ativos
+                const activeProducts = products.filter(product => product.status === 'ativo');
+                
+                console.log(`📦 ${activeProducts.length} produtos ativos encontrados`);
+                
+                // Limpa grid
+                productsGrid.innerHTML = '';
+                
+                if (activeProducts.length === 0) {
+                    showEmptyState(productsGrid);
+                    return;
+                }
+                
+                // Renderiza produtos
+                activeProducts.forEach(product => {
+                    const productCard = createSimpleProductCard(product);
+                    productsGrid.appendChild(productCard);
+                });
+                
+                console.log('✅ Produtos carregados com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar produtos:', error);
+                showErrorState(productsGrid);
+            }
+        }
+        
+        // Produtos padrão (mesmo do admin)
+        function getDefaultProducts() {
+            return [
                 {
                     id: 'default-1',
-                    name: 'Álbum de Casamento',
-                    description: 'Álbum personalizado com detalhes em renda e flores secas. Perfeito para guardar as memórias mais especiais do seu grande dia.',
-                    price: '89.90',
-                    category: 'albuns',
-                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
-                    icon: 'fas fa-heart',
-                    gradient: 'from-rose-light to-rose-medium',
-                    images: [{ src: 'images/produtos/IMG_5262.JPG' }]
+                    name: 'Álbum de Fotos Personalizado',
+                    description: 'Álbum de fotos personalizado com capa decorada e páginas temáticas.',
+                    price: 45.00,
+                    category: 'Álbuns',
+                    status: 'ativo',
+                    images: [],
+                    shopeeLink: 'https://shopee.com.br/ateliedalele',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 },
                 {
                     id: 'default-2',
-                    name: 'Scrapbook Baby',
-                    description: 'Álbum para registrar os primeiros momentos do bebê. Cada página é uma nova descoberta e sorriso.',
-                    price: '75.00',
-                    category: 'albuns',
-                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
-                    icon: 'fas fa-baby',
-                    gradient: 'from-blue-200 to-blue-400',
-                    images: [{ src: 'images/produtos/26f5.png' }]
+                    name: 'Scrapbook Romântico',
+                    description: 'Scrapbook temático para casais com decorações românticas.',
+                    price: 65.00,
+                    category: 'Scrapbook',
+                    status: 'ativo',
+                    images: [],
+                    shopeeLink: 'https://shopee.com.br/ateliedalele',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 },
                 {
                     id: 'default-3',
-                    name: 'Kit Scrapbook Completo',
-                    description: 'Kit completo com papéis decorativos, adesivos, fitas e acessórios. Tudo que você precisa para criar memórias únicas.',
-                    price: '45.00',
-                    category: 'kits',
-                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
-                    icon: 'fas fa-palette',
-                    gradient: 'from-green-200 to-green-400',
-                    images: [{ src: 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg' }]
-                },
-                {
-                    id: 'default-4',
-                    name: 'Álbum de Viagem',
-                    description: 'Álbum especial para registrar suas aventuras e momentos inesquecíveis de viagem.',
-                    price: '65.00',
-                    category: 'albuns',
-                    shopeeLink: 'https://shopee.com.br/ateliedalelê',
-                    icon: 'fas fa-plane',
-                    gradient: 'from-purple-200 to-purple-400',
-                    images: [{ src: 'images/produtos/images.jpg' }]
+                    name: 'Convite de Casamento',
+                    description: 'Convite de casamento elegante com acabamento especial.',
+                    price: 8.50,
+                    category: 'Convites',
+                    status: 'ativo',
+                    images: [],
+                    shopeeLink: 'https://shopee.com.br/ateliedalele',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 }
-            ].filter(product => !excludedProducts.includes(product.id)); // Filter out excluded products
-
-            // Merge admin products with default products
-            const mergedProducts = mergeProductsWithAdminImages(defaultProducts, products);
-            
-            // Clear grid
-            productsGrid.innerHTML = '';
-            
-            // Add products to grid (simplified)
-            for (const product of mergedProducts) {
-                const productCard = createProductCard(product);
-                productsGrid.appendChild(productCard);
-            }
-        }, 100); // 100ms debounce
+            ];
         }
         
-        // Merge default products with admin-managed images
-        function mergeProductsWithAdminImages(defaultProducts, adminProducts) {
-            const merged = [...defaultProducts];
+        // Cria card de produto simplificado
+        function createSimpleProductCard(product) {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1';
+            productDiv.setAttribute('data-product-id', product.id);
             
-            // For each admin product, update the corresponding default product
-            adminProducts.forEach(adminProduct => {
-                const defaultProductIndex = merged.findIndex(p => p.id === adminProduct.id);
+            // Obtém a melhor imagem disponível
+            const imageUrl = getBestImageForProduct(product);
+            const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
+            const formattedPrice = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(price);
+            
+            productDiv.innerHTML = `
+                <div class="relative overflow-hidden">
+                    ${imageUrl ? `
+                        <img src="${imageUrl}" 
+                             alt="${product.name}" 
+                             class="product-image w-full h-64 object-cover transition-transform duration-300 hover:scale-105"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="fallback-content hidden absolute inset-0 bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
+                            <div class="text-center">
+                                <i class="fas fa-image text-4xl text-rose-300 mb-2"></i>
+                                <p class="text-rose-500 text-sm">Imagem em breve</p>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="fallback-content w-full h-64 bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
+                            <div class="text-center">
+                                <i class="fas fa-image text-4xl text-rose-300 mb-2"></i>
+                                <p class="text-rose-500 text-sm">Imagem em breve</p>
+                            </div>
+                        </div>
+                    `}
+                    
+                    <!-- Badge de categoria -->
+                    <div class="absolute top-3 left-3">
+                        <span class="bg-white/90 backdrop-blur-sm text-rose-600 px-3 py-1 rounded-full text-xs font-medium">
+                            ${product.category}
+                        </span>
+                    </div>
+                </div>
                 
-                if (defaultProductIndex !== -1) {
-                    // Update the default product with admin images
-                    if (adminProduct.images && adminProduct.images.length > 0) {
-                        merged[defaultProductIndex].images = adminProduct.images;
-                    }
-                    // Update other properties if they exist
-                    if (adminProduct.name) merged[defaultProductIndex].name = adminProduct.name;
-                    if (adminProduct.description) merged[defaultProductIndex].description = adminProduct.description;
-                    if (adminProduct.price) merged[defaultProductIndex].price = adminProduct.price;
-                } else {
-                    // Add new product from admin
-                    merged.push(adminProduct);
-                }
-            });
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-1">${product.name}</h3>
+                    <p class="text-gray-600 mb-4 line-clamp-2">${product.description}</p>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-rose-600">${formattedPrice}</span>
+                        ${product.shopeeLink ? `
+                            <a href="${product.shopeeLink}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-lg transition-colors duration-300 flex items-center gap-2">
+                                <i class="fab fa-shopify"></i>
+                                Ver na Shopee
+                            </a>
+                        ` : `
+                            <button class="bg-gray-400 text-white px-6 py-2 rounded-lg cursor-not-allowed">
+                                Em breve
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
             
-            return merged;
+            return productDiv;
         }
+        
+        // Obtém a melhor imagem disponível para o produto
+        function getBestImageForProduct(product) {
+            // Verifica se tem imagens no array
+            if (product.images && product.images.length > 0) {
+                return product.images[0].src;
+            }
+            
+            // Verifica se tem primarySrc
+            if (product.primarySrc) {
+                return product.primarySrc;
+            }
+            
+            return null;
+        }
+        
+        // Mostra estado vazio
+        function showEmptyState(container) {
+            container.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                    <div class="bg-rose-100 rounded-full p-6 mb-6">
+                        <i class="fas fa-box-open text-4xl text-rose-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Nenhum produto disponível</h3>
+                    <p class="text-gray-500 mb-6 max-w-md">
+                        Nossos produtos estão sendo organizados. Volte em breve para ver nossas novidades!
+                    </p>
+                    <a href="contato.html" class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-lg transition-colors duration-300">
+                        Entre em Contato
+                    </a>
+                </div>
+            `;
+        }
+        
+        // Mostra estado de erro
+        function showErrorState(container) {
+            container.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                    <div class="bg-red-100 rounded-full p-6 mb-6">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Erro ao carregar produtos</h3>
+                    <p class="text-gray-500 mb-6 max-w-md">
+                        Houve um problema ao carregar nossos produtos. Tente atualizar a página.
+                    </p>
+                    <button onclick="loadProducts()" class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-lg transition-colors duration-300">
+                        <i class="fas fa-redo mr-2"></i>
+                        Tentar Novamente
+                    </button>
+                </div>
+            `;
+        }
+        
+        // *** FUNÇÕES ANTIGAS REMOVIDAS - Sistema simplificado em uso ***
 
 
 
