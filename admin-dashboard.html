@@ -1205,15 +1205,85 @@
         }
 
         /**
+         * Busca produto por ID considerando produtos padrão e salvos
+         */
+        function findProductById(productId) {
+            // Primeiro, busca nos produtos salvos
+            const savedProducts = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const savedProduct = savedProducts.find(p => p.id === productId);
+            
+            if (savedProduct) {
+                return { product: savedProduct, source: 'saved', index: savedProducts.findIndex(p => p.id === productId) };
+            }
+            
+            // Se não encontrou nos salvos, busca nos produtos padrão (se for um ID padrão)
+            if (productId.startsWith('default-')) {
+                const defaultProducts = [
+                    {
+                        id: 'default-1',
+                        name: 'Álbum de Casamento',
+                        description: 'Álbum personalizado com detalhes em renda e flores secas. Perfeito para guardar as memórias mais especiais do seu grande dia.',
+                        price: '89.90',
+                        category: 'albuns',
+                        shopeeLink: 'https://shopee.com.br/ateliedalelê',
+                        isDefault: true
+                    },
+                    {
+                        id: 'default-2',
+                        name: 'Scrapbook Baby',
+                        description: 'Álbum para registrar os primeiros momentos do bebê. Cada página é uma nova descoberta e sorriso.',
+                        price: '75.00',
+                        category: 'albuns',
+                        shopeeLink: 'https://shopee.com.br/ateliedalelê',
+                        isDefault: true
+                    },
+                    {
+                        id: 'default-3',
+                        name: 'Kit Scrapbook Completo',
+                        description: 'Kit completo com papéis decorativos, adesivos, fitas e acessórios. Tudo que você precisa para criar memórias únicas.',
+                        price: '45.00',
+                        category: 'kits',
+                        shopeeLink: 'https://shopee.com.br/ateliedalelê',
+                        isDefault: true
+                    },
+                    {
+                        id: 'default-4',
+                        name: 'Álbum de Viagem',
+                        description: 'Álbum especial para registrar suas aventuras e momentos inesquecíveis de viagem.',
+                        price: '65.00',
+                        category: 'albuns',
+                        shopeeLink: 'https://shopee.com.br/ateliedalelê',
+                        isDefault: true
+                    }
+                ];
+                
+                const defaultProduct = defaultProducts.find(p => p.id === productId);
+                if (defaultProduct) {
+                    return { product: defaultProduct, source: 'default', index: -1 };
+                }
+            }
+            
+            return null;
+        }
+
+        /**
          * Atualiza produto no localStorage
          */
         function updateProductInStorage(productId, updatedData) {
             try {
-                let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-                const productIndex = products.findIndex(p => p.id === productId);
+                console.log('Tentando atualizar produto:', productId, updatedData);
                 
-                if (productIndex === -1) {
-                    showErrorMessage('Produto não encontrado');
+                const productData = findProductById(productId);
+                
+                if (!productData) {
+                    console.error('Produto não encontrado:', productId);
+                    showErrorMessage('Produto não encontrado. Verifique se o produto ainda existe.');
+                    return false;
+                }
+                
+                // Se é um produto padrão, não pode ser editado diretamente
+                if (productData.source === 'default') {
+                    showErrorMessage('Produtos padrão não podem ser editados. Crie um novo produto para personalizar.');
                     return false;
                 }
 
@@ -1221,6 +1291,16 @@
                 const validation = validateProductData(updatedData);
                 if (!validation.isValid) {
                     showErrorMessage(`Erro de validação: ${validation.errors.join(', ')}`);
+                    return false;
+                }
+
+                // Atualiza produto nos dados salvos
+                let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                const productIndex = products.findIndex(p => p.id === productId);
+                
+                if (productIndex === -1) {
+                    console.error('Inconsistência: produto encontrado mas não está no array');
+                    showErrorMessage('Erro de sincronização. Tente recarregar a página.');
                     return false;
                 }
 
@@ -1236,6 +1316,7 @@
                 };
 
                 localStorage.setItem('atelieProducts', JSON.stringify(products));
+                console.log('Produto atualizado com sucesso');
                 
                 // Atualiza UI
                 renderProductList(products);
@@ -1246,7 +1327,7 @@
                 return true;
             } catch (error) {
                 console.error('Erro ao atualizar produto:', error);
-                showErrorMessage('Erro ao atualizar produto');
+                showErrorMessage('Erro interno ao atualizar produto. Tente novamente.');
                 return false;
             }
         }
@@ -1455,18 +1536,34 @@
          * Exclui um produto pelo ID e atualiza a tabela e localStorage.
          */
         function deleteProduct(productId) {
+            console.log('Tentando excluir produto:', productId);
+            
+            // Verifica se o produto existe antes de tentar excluir
+            const productData = findProductById(productId);
+            
+            if (!productData) {
+                console.error('Produto não encontrado para exclusão:', productId);
+                showErrorMessage('Produto não encontrado. Pode ter sido excluído por outra sessão.');
+                return;
+            }
+            
+            // Produtos padrão - adiciona à lista de exclusão
             if (productId.startsWith('default-')) {
-                if (confirm('Tem certeza que deseja remover este produto?')) {
+                if (confirm(`Tem certeza que deseja remover "${productData.product.name}"?`)) {
                     // Add to excluded products list to prevent recreation
                     const excludedProducts = JSON.parse(localStorage.getItem('excludedProducts') || '[]');
                     if (!excludedProducts.includes(productId)) {
                         excludedProducts.push(productId);
                         localStorage.setItem('excludedProducts', JSON.stringify(excludedProducts));
+                        console.log('Produto padrão adicionado à lista de exclusão:', productId);
                     }
                     
                     // Remove from UI immediately
                     const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-                    if (row) row.remove();
+                    if (row) {
+                        row.remove();
+                        console.log('Produto removido da UI');
+                    }
                     
                     showSuccessMessage('Produto removido com sucesso!');
                     
@@ -1481,18 +1578,32 @@
                 return;
             }
 
-            if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+            // Produtos salvos - remove do localStorage
+            if (!confirm(`Tem certeza que deseja excluir "${productData.product.name}"?`)) {
+                return;
+            }
 
-            let products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
-            const productIndex = products.findIndex(p => p.id === productId);
+            try {
+                let products = JSON.parse(localStorage.getItem("atelieProducts")) || [];
+                const productIndex = products.findIndex(p => p.id === productId);
 
-            if (productIndex !== -1) {
-                products.splice(productIndex, 1); // Remove o produto do array
+                if (productIndex === -1) {
+                    console.error('Inconsistência: produto encontrado mas não está no array para exclusão');
+                    showErrorMessage("Erro de sincronização. Produto pode ter sido excluído. Recarregue a página.");
+                    return;
+                }
+
+                // Remove o produto do array
+                products.splice(productIndex, 1);
                 localStorage.setItem("atelieProducts", JSON.stringify(products));
+                console.log('Produto excluído do localStorage');
                 
                 // Update UI immediately without triggering events
                 const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-                if (row) row.remove();
+                if (row) {
+                    row.remove();
+                    console.log('Produto removido da UI');
+                }
                 
                 showSuccessMessage("Produto excluído com sucesso!");
                 
@@ -1503,8 +1614,10 @@
                         productId: productId
                     }, '*');
                 }
-            } else {
-                showErrorMessage("Produto não encontrado!");
+                
+            } catch (error) {
+                console.error('Erro ao excluir produto:', error);
+                showErrorMessage("Erro interno ao excluir produto. Tente novamente.");
             }
         }
 
@@ -1512,21 +1625,26 @@
          * Edita produto
          */
         function editProduct(productId) {
+            console.log('Tentando editar produto:', productId);
+            
+            // Verifica se o produto existe
+            const productData = findProductById(productId);
+            
+            if (!productData) {
+                console.error('Produto não encontrado para edição:', productId);
+                showErrorMessage('Produto não encontrado. Pode ter sido excluído por outra sessão.');
+                return;
+            }
+            
+            // Produtos padrão não podem ser editados diretamente
             if (productId.startsWith('default-')) {
-                alert('Produtos padrão não podem ser editados. Adicione um novo produto para editar.');
+                showWarningMessage('Produtos padrão não podem ser editados. Crie um novo produto para personalizar ou adicione imagens via gerenciamento de imagens.');
                 return;
             }
             
-            // Busca dados do produto
-            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            const product = products.find(p => p.id === productId);
-            
-            if (!product) {
-                showErrorMessage('Produto não encontrado');
-                return;
-            }
-            
-            showEditProductForm(product);
+            // Produto existe e pode ser editado
+            console.log('Abrindo formulário de edição para:', productData.product.name);
+            showEditProductForm(productData.product);
         }
 
         /**
@@ -1575,6 +1693,10 @@
 
         function showErrorMessage(message) {
             showNotification(message, 'error');
+        }
+
+        function showWarningMessage(message) {
+            showNotification(message, 'warning');
         }
 
         // ========================================
@@ -2779,6 +2901,52 @@
         window.clearStorageData = clearStorageData;
         window.restoreExcludedProducts = restoreExcludedProducts;
         window.exportData = exportData;
+
+        /**
+         * Verifica e corrige integridade dos dados do localStorage
+         */
+        function checkAndFixDataIntegrity() {
+            try {
+                // Verifica produtos salvos
+                const savedProducts = localStorage.getItem('atelieProducts');
+                if (savedProducts) {
+                    try {
+                        const products = JSON.parse(savedProducts);
+                        if (!Array.isArray(products)) {
+                            console.warn('Dados de produtos corrompidos, limpando...');
+                            localStorage.setItem('atelieProducts', '[]');
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao parsear produtos, limpando dados corrompidos...');
+                        localStorage.setItem('atelieProducts', '[]');
+                    }
+                }
+                
+                // Verifica produtos excluídos
+                const excludedProducts = localStorage.getItem('excludedProducts');
+                if (excludedProducts) {
+                    try {
+                        const excluded = JSON.parse(excludedProducts);
+                        if (!Array.isArray(excluded)) {
+                            console.warn('Dados de produtos excluídos corrompidos, limpando...');
+                            localStorage.setItem('excludedProducts', '[]');
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao parsear produtos excluídos, limpando dados corrompidos...');
+                        localStorage.setItem('excludedProducts', '[]');
+                    }
+                }
+                
+                console.log('Verificação de integridade concluída');
+            } catch (error) {
+                console.error('Erro durante verificação de integridade:', error);
+            }
+        }
+
+        // Executa verificação de integridade ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAndFixDataIntegrity();
+        });
     </script>
 </body>
 </html> 
