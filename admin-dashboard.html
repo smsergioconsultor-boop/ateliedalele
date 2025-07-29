@@ -548,50 +548,66 @@
             <!-- Images Section -->
             <div id="images" class="section hidden">
                 <div class="mb-8">
-                    <h2 class="text-3xl font-elegant text-gray-800 mb-2">Gerenciar Imagens</h2>
-                    <p class="text-gray-600">Faça upload e gerencie as imagens do site</p>
+                    <h2 class="text-3xl font-elegant text-gray-800 mb-2">Como Gerenciar Imagens dos Produtos</h2>
+                    <p class="text-gray-600">Guia rápido para adicionar imagens aos seus produtos</p>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <!-- Upload Area -->
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-700 mb-2">Upload de Imagens</h3>
-                        <p class="text-gray-500 mb-4">Arraste e solte imagens aqui ou clique para selecionar</p>
-                        <input type="file" id="imageUpload" multiple accept="image/*" class="hidden">
-                        <button onclick="document.getElementById('imageUpload').click()" class="bg-rose-medium text-white px-6 py-3 rounded-lg hover:bg-rose-dark transition-colors duration-300">
-                            <i class="fas fa-upload mr-2"></i>
-                            Selecionar Imagens
+                <!-- Instruções Claras -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 text-xl mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-800 mb-3">📸 Como Adicionar Imagens aos Produtos:</h3>
+                            <ol class="list-decimal list-inside space-y-2 text-blue-700">
+                                <li><strong>Vá para a seção "Produtos"</strong> no menu lateral</li>
+                                <li><strong>Clique no ícone verde 📷</strong> do produto que deseja editar</li>
+                                <li><strong>No modal que abrir</strong>, clique em "Selecionar Imagens"</li>
+                                <li><strong>Escolha suas fotos</strong> (JPG, PNG, etc. - máximo 5MB cada)</li>
+                                <li><strong>As imagens aparecerão automaticamente</strong> na loja!</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teste Rápido -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">🧪 Teste o Sistema</h3>
+                    <p class="text-gray-600 mb-4">Use os botões abaixo para testar se o sistema está funcionando:</p>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="demonstrarSistema()" class="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors">
+                            <i class="fas fa-play-circle mr-2"></i>
+                            🎭 Ver Demonstração
+                        </button>
+                        
+                        <button onclick="testAllImageIcons()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                            <i class="fas fa-play mr-2"></i>
+                            Testar Todos os Ícones
+                        </button>
+                        
+                        <button onclick="testImageIcon('default-1')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-camera mr-2"></i>
+                            Testar Álbum de Casamento
+                        </button>
+                        
+                        <button onclick="testImageSystem()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                            <i class="fas fa-cog mr-2"></i>
+                            Testar Sistema Completo
                         </button>
                     </div>
+                </div>
 
-                    <!-- Image Gallery -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <div class="relative group">
-                            <img src="https://via.placeholder.com/200x200/F9A8D4/FFFFFF?text=Produto+1" alt="Produto 1" class="w-full h-32 object-cover rounded-lg">
-                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                <button class="text-white hover:text-red-400 transition-colors duration-300">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="relative group">
-                            <img src="https://via.placeholder.com/200x200/F9A8D4/FFFFFF?text=Produto+2" alt="Produto 2" class="w-full h-32 object-cover rounded-lg">
-                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                <button class="text-white hover:text-red-400 transition-colors duration-300">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="relative group">
-                            <img src="https://via.placeholder.com/200x200/F9A8D4/FFFFFF?text=Produto+3" alt="Produto 3" class="w-full h-32 object-cover rounded-lg">
-                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                <button class="text-white hover:text-red-400 transition-colors duration-300">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                <!-- Status dos Produtos -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Status dos Produtos</h3>
+                    <div id="productImageStatus" class="space-y-3">
+                        <!-- Status será preenchido dinamicamente -->
                     </div>
+                    
+                    <button onclick="updateProductImageStatus()" class="mt-4 bg-rose-medium text-white px-4 py-2 rounded-lg hover:bg-rose-dark transition-colors">
+                        <i class="fas fa-sync mr-2"></i>
+                        Atualizar Status
+                    </button>
                 </div>
             </div>
 
@@ -1267,7 +1283,7 @@
         }
 
         /**
-         * Atualiza produto no localStorage
+         * Atualiza produto no localStorage (AGORA SUPORTA PRODUTOS PADRÃO)
          */
         function updateProductInStorage(productId, updatedData) {
             try {
@@ -1280,12 +1296,6 @@
                     showErrorMessage('Produto não encontrado. Verifique se o produto ainda existe.');
                     return false;
                 }
-                
-                // Se é um produto padrão, não pode ser editado diretamente
-                if (productData.source === 'default') {
-                    showErrorMessage('Produtos padrão não podem ser editados. Crie um novo produto para personalizar.');
-                    return false;
-                }
 
                 // Valida dados atualizados
                 const validation = validateProductData(updatedData);
@@ -1294,17 +1304,29 @@
                     return false;
                 }
 
-                // Atualiza produto nos dados salvos
+                // Carrega produtos do localStorage
                 let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-                const productIndex = products.findIndex(p => p.id === productId);
+                let productIndex = products.findIndex(p => p.id === productId);
                 
+                // Se é produto padrão e não existe no localStorage, cria entrada
+                if (productIndex === -1 && productId.startsWith('default-')) {
+                    console.log('Criando entrada no localStorage para produto padrão:', productId);
+                    const defaultData = getDefaultProductData(productId);
+                    if (defaultData) {
+                        products.push(defaultData);
+                        productIndex = products.length - 1;
+                    }
+                }
+                
+                // Se ainda não encontrou, erro
                 if (productIndex === -1) {
-                    console.error('Inconsistência: produto encontrado mas não está no array');
-                    showErrorMessage('Erro de sincronização. Tente recarregar a página.');
+                    console.error('Não foi possível criar/encontrar produto');
+                    showErrorMessage('Erro ao localizar produto para atualização.');
                     return false;
                 }
 
-                // Atualiza produto
+                // Atualiza produto preservando imagens existentes
+                const existingImages = products[productIndex].images || [];
                 products[productIndex] = {
                     ...products[productIndex],
                     name: updatedData.name.trim(),
@@ -1312,7 +1334,9 @@
                     price: parseFloat(updatedData.price).toFixed(2),
                     category: updatedData.category,
                     shopeeLink: updatedData.shopeeLink || "",
-                    updatedAt: new Date().toISOString()
+                    images: existingImages, // Preserva imagens
+                    updatedAt: new Date().toISOString(),
+                    isDefault: productId.startsWith('default-') // Marca se é produto padrão
                 };
 
                 localStorage.setItem('atelieProducts', JSON.stringify(products));
@@ -1622,7 +1646,7 @@
         }
 
         /**
-         * Edita produto
+         * Edita produto (AGORA PERMITE PRODUTOS PADRÃO)
          */
         function editProduct(productId) {
             console.log('Tentando editar produto:', productId);
@@ -1636,13 +1660,7 @@
                 return;
             }
             
-            // Produtos padrão não podem ser editados diretamente
-            if (productId.startsWith('default-')) {
-                showWarningMessage('Produtos padrão não podem ser editados. Crie um novo produto para personalizar ou adicione imagens via gerenciamento de imagens.');
-                return;
-            }
-            
-            // Produto existe e pode ser editado
+            // AGORA PERMITE EDITAR PRODUTOS PADRÃO TAMBÉM!
             console.log('Abrindo formulário de edição para:', productData.product.name);
             showEditProductForm(productData.product);
         }
@@ -3459,11 +3477,246 @@
 
         // Executa teste automaticamente ao carregar a página
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(testImageSystem, 1000);
+            console.log('🚀 Inicializando sistema administrativo...');
+            
+            // Executa verificação de integridade
+            checkAndFixDataIntegrity();
+            
+            // Aguarda um pouco e executa testes
+            setTimeout(() => {
+                console.log('🧪 Executando testes automáticos...');
+                testImageSystem();
+                
+                // Atualiza status das imagens
+                setTimeout(() => {
+                    updateProductImageStatus();
+                }, 500);
+                
+                // Mostra notificação de boas-vindas
+                setTimeout(() => {
+                    showNotification('Sistema carregado! Use a seção "Imagens" para ver como funciona.', 'success');
+                }, 1000);
+                
+            }, 1000);
         });
 
-        // Expõe função de teste globalmente
+        /**
+         * Testa se o ícone de imagem está funcionando para um produto específico
+         */
+        function testImageIcon(productId) {
+            console.log('🧪 Testando ícone de imagem para produto:', productId);
+            
+            // Encontra o botão do ícone
+            const imageButton = document.querySelector(`button[onclick*="manageProductImages('${productId}'"]`);
+            
+            if (!imageButton) {
+                console.error('❌ Botão de imagem não encontrado para produto:', productId);
+                showNotification('Botão de imagem não encontrado!', 'error');
+                return false;
+            }
+            
+            console.log('✅ Botão encontrado, tentando abrir modal...');
+            
+            // Simula clique
+            try {
+                manageProductImages(productId, `Teste ${productId}`);
+                console.log('✅ Modal deve ter aberto!');
+                showNotification('Teste concluído - verifique se o modal abriu!', 'success');
+                return true;
+            } catch (error) {
+                console.error('❌ Erro ao abrir modal:', error);
+                showNotification('Erro ao abrir modal de imagens!', 'error');
+                return false;
+            }
+        }
+
+        /**
+         * Testa todos os ícones de imagem da página
+         */
+        function testAllImageIcons() {
+            console.log('🧪 Testando todos os ícones de imagem...');
+            
+            const products = ['default-1', 'default-2', 'default-3', 'default-4'];
+            const results = [];
+            
+            products.forEach(productId => {
+                const result = testImageIcon(productId);
+                results.push({ productId, success: result });
+            });
+            
+            const successCount = results.filter(r => r.success).length;
+            console.log(`📊 Resultado: ${successCount}/${results.length} ícones funcionando`);
+            
+            if (successCount === results.length) {
+                showNotification('Todos os ícones estão funcionando!', 'success');
+            } else {
+                showNotification(`${successCount}/${results.length} ícones funcionando`, 'warning');
+            }
+            
+            return results;
+        }
+
+        // Expõe funções de teste globalmente
+        window.testImageIcon = testImageIcon;
+        window.testAllImageIcons = testAllImageIcons;
+
+        /**
+         * Atualiza o status das imagens dos produtos
+         */
+        function updateProductImageStatus() {
+            console.log('Atualizando status das imagens dos produtos...');
+            
+            const statusContainer = document.getElementById('productImageStatus');
+            if (!statusContainer) return;
+            
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            const defaultProducts = [
+                { id: 'default-1', name: 'Álbum de Casamento' },
+                { id: 'default-2', name: 'Scrapbook Baby' },
+                { id: 'default-3', name: 'Kit Scrapbook Completo' },
+                { id: 'default-4', name: 'Álbum de Viagem' }
+            ];
+            
+            let statusHTML = '';
+            
+            defaultProducts.forEach(defaultProd => {
+                const savedProduct = products.find(p => p.id === defaultProd.id);
+                const imageCount = savedProduct?.images?.length || 0;
+                const hasImages = imageCount > 0;
+                
+                const statusIcon = hasImages ? '✅' : '⚠️';
+                const statusText = hasImages ? `${imageCount} imagem(ns)` : 'Sem imagens';
+                const statusColor = hasImages ? 'text-green-600' : 'text-amber-600';
+                
+                statusHTML += `
+                    <div class="flex items-center justify-between p-3 border rounded-lg">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${statusIcon}</span>
+                            <div>
+                                <h4 class="font-medium text-gray-800">${defaultProd.name}</h4>
+                                <p class="text-sm ${statusColor}">${statusText}</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="testImageIcon('${defaultProd.id}')" 
+                                    class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors"
+                                    title="Testar ícone">
+                                🧪 Testar
+                            </button>
+                            <button onclick="manageProductImages('${defaultProd.id}', '${defaultProd.name}')" 
+                                    class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors"
+                                    title="Adicionar imagens">
+                                📷 Imagens
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Adiciona produtos personalizados
+            const customProducts = products.filter(p => !p.id.startsWith('default-'));
+            if (customProducts.length > 0) {
+                statusHTML += `
+                    <div class="border-t pt-4 mt-4">
+                        <h4 class="font-medium text-gray-800 mb-3">📦 Produtos Personalizados:</h4>
+                `;
+                
+                customProducts.forEach(product => {
+                    const imageCount = product.images?.length || 0;
+                    const hasImages = imageCount > 0;
+                    
+                    const statusIcon = hasImages ? '✅' : '⚠️';
+                    const statusText = hasImages ? `${imageCount} imagem(ns)` : 'Sem imagens';
+                    const statusColor = hasImages ? 'text-green-600' : 'text-amber-600';
+                    
+                    statusHTML += `
+                        <div class="flex items-center justify-between p-3 border rounded-lg mb-2">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">${statusIcon}</span>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">${product.name}</h4>
+                                    <p class="text-sm ${statusColor}">${statusText}</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="manageProductImages('${product.id}', '${product.name}')" 
+                                        class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">
+                                    📷 Imagens
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                statusHTML += '</div>';
+            }
+            
+            statusContainer.innerHTML = statusHTML;
+            
+            // Contadores
+            const totalProducts = defaultProducts.length + customProducts.length;
+            const productsWithImages = [...defaultProducts, ...customProducts].filter(p => {
+                const saved = products.find(sp => sp.id === p.id);
+                return saved?.images?.length > 0;
+            }).length;
+            
+            console.log(`Status atualizado: ${productsWithImages}/${totalProducts} produtos com imagens`);
+            showNotification(`${productsWithImages}/${totalProducts} produtos têm imagens`, 'info');
+        }
+
+        // Expõe função globalmente
+        window.updateProductImageStatus = updateProductImageStatus;
+
+        // Expõe todas as funções de teste globalmente
         window.testImageSystem = testImageSystem;
+        window.testImageIcon = testImageIcon;
+        window.testAllImageIcons = testAllImageIcons;
+
+        /**
+         * Demonstração completa do sistema de imagens
+         */
+        function demonstrarSistema() {
+            console.log('🎭 Iniciando demonstração do sistema...');
+            
+            let step = 1;
+            const totalSteps = 4;
+            
+            function nextStep(message, action) {
+                showNotification(`Passo ${step}/${totalSteps}: ${message}`, 'info');
+                setTimeout(action, 2000);
+                step++;
+            }
+            
+            // Passo 1: Mostrar seção produtos
+            nextStep('Vamos para a seção Produtos', () => {
+                showSection('products');
+                
+                // Passo 2: Destacar ícone de imagem
+                nextStep('Veja os ícones verdes 📷 na tabela', () => {
+                    const firstImageIcon = document.querySelector('[title="Gerenciar Imagens"]');
+                    if (firstImageIcon) {
+                        firstImageIcon.style.animation = 'pulse 1s infinite';
+                        firstImageIcon.style.backgroundColor = '#10B981';
+                        firstImageIcon.style.borderRadius = '50%';
+                        firstImageIcon.style.padding = '8px';
+                    }
+                    
+                    // Passo 3: Abrir modal de exemplo
+                    nextStep('Abrindo modal de imagens...', () => {
+                        manageProductImages('default-1', 'Álbum de Casamento');
+                        
+                        // Passo 4: Explicar o modal
+                        nextStep('Aqui você adiciona imagens! Clique em "Selecionar Imagens"', () => {
+                            console.log('✅ Demonstração concluída!');
+                            showNotification('🎉 Agora você já sabe como usar! Clique nos ícones 📷 para gerenciar imagens.', 'success');
+                        });
+                    });
+                });
+            });
+        }
+
+        // Expõe função de demonstração
+        window.demonstrarSistema = demonstrarSistema;
     </script>
 </body>
 </html> 
