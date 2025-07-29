@@ -90,6 +90,14 @@
                                     <i class="fas fa-broom mr-2 text-yellow-500"></i>
                                     Limpar Duplicados
                                 </button>
+                                <button onclick="optimizeStorage()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-compress-arrows-alt mr-2 text-purple-500"></i>
+                                    Otimizar Storage
+                                </button>
+                                <button onclick="addShopeeLinksToAll()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-shopping-cart mr-2 text-green-500"></i>
+                                    Adicionar Links Shopee
+                                </button>
                                 <button onclick="clearAllTestProducts()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">
                                     <i class="fas fa-trash mr-2 text-red-500"></i>
                                     Remover Testes
@@ -370,6 +378,7 @@
                     category: 'Álbuns',
                     status: 'ativo',
                     images: [],
+                    shopeeLink: 'https://shopee.com.br/ateliedalele',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 },
@@ -381,6 +390,7 @@
                     category: 'Scrapbook',
                     status: 'ativo',
                     images: [],
+                    shopeeLink: 'https://shopee.com.br/ateliedalele',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 },
@@ -392,6 +402,7 @@
                     category: 'Convites',
                     status: 'ativo',
                     images: [],
+                    shopeeLink: 'https://shopee.com.br/ateliedalele',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 }
@@ -681,6 +692,15 @@
                                 </div>
                             </div>
                             
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Link da Shopee</label>
+                                <input type="url" name="shopeeLink" 
+                                       value="${product?.shopeeLink || 'https://shopee.com.br/ateliedalele'}"
+                                       placeholder="https://shopee.com.br/ateliedalele"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-medium focus:border-transparent">
+                                <p class="text-xs text-gray-500 mt-1">Link para o produto na Shopee (opcional)</p>
+                            </div>
+                            
                             <div class="flex justify-end space-x-3 pt-4">
                                 <button type="button" onclick="closeModal('${modalId}')"
                                         class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
@@ -716,6 +736,7 @@
                 description: formData.get('description').trim(),
                 price: parseFloat(formData.get('price')),
                 category: formData.get('category'),
+                shopeeLink: formData.get('shopeeLink') || 'https://shopee.com.br/ateliedalele',
                 status: 'ativo',
                 images: editId ? APP_STATE.products.find(p => p.id === editId)?.images || [] : [],
                 createdAt: editId ? APP_STATE.products.find(p => p.id === editId)?.createdAt : new Date().toISOString(),
@@ -1194,6 +1215,97 @@
             return products;
         }
         
+        function optimizeStorage() {
+            console.log('⚡ Otimizando storage...');
+            
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            let totalOptimized = 0;
+            let imagesRemoved = 0;
+            
+            const beforeSize = JSON.stringify(products).length;
+            
+            products = products.map(product => {
+                // Otimiza cada produto
+                const optimizedProduct = {
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    category: product.category,
+                    status: product.status || 'ativo',
+                    shopeeLink: product.shopeeLink || 'https://shopee.com.br/ateliedalele',
+                    createdAt: product.createdAt || new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    images: []
+                };
+                
+                // Remove imagens muito grandes (> 500KB)
+                if (product.images && product.images.length > 0) {
+                    product.images.forEach(image => {
+                        const imageSize = image.src ? image.src.length : 0;
+                        if (imageSize < 500 * 1024) { // 500KB limit
+                            optimizedProduct.images.push({
+                                id: image.id,
+                                src: image.src,
+                                name: image.name,
+                                size: image.size,
+                                uploadedAt: image.uploadedAt
+                            });
+                        } else {
+                            imagesRemoved++;
+                            console.log(`🗑️ Removendo imagem grande de "${product.name}": ${formatBytes(imageSize)}`);
+                        }
+                    });
+                }
+                
+                return optimizedProduct;
+            });
+            
+            const afterSize = JSON.stringify(products).length;
+            const sizeSaved = beforeSize - afterSize;
+            
+            if (sizeSaved > 0 || imagesRemoved > 0) {
+                saveProducts(products);
+                renderProducts();
+                console.log(`✅ Storage otimizado: ${formatBytes(sizeSaved)} liberados, ${imagesRemoved} imagens removidas`);
+                showNotification(`Storage otimizado! ${formatBytes(sizeSaved)} liberados.`, 'success');
+            } else {
+                console.log('✅ Storage já otimizado');
+                showNotification('Storage já está otimizado.', 'info');
+            }
+            
+            return products;
+        }
+        
+        function addShopeeLinksToAll() {
+            console.log('🛒 Adicionando links da Shopee...');
+            
+            let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            let updated = 0;
+            
+            products = products.map(product => {
+                if (!product.shopeeLink) {
+                    product.shopeeLink = 'https://shopee.com.br/ateliedalele';
+                    product.updatedAt = new Date().toISOString();
+                    updated++;
+                    console.log(`🛒 Link adicionado para "${product.name}"`);
+                }
+                return product;
+            });
+            
+            if (updated > 0) {
+                saveProducts(products);
+                renderProducts();
+                showNotification(`${updated} produto(s) atualizados com link da Shopee!`, 'success');
+                console.log(`🎉 ${updated} produtos atualizados!`);
+            } else {
+                console.log('✅ Todos os produtos já têm links');
+                showNotification('Todos os produtos já têm links da Shopee.', 'info');
+            }
+            
+            return products;
+        }
+        
         function clearAllTestProducts() {
             if (!confirm('❓ Deseja remover TODOS os produtos de teste (que começam com "teste", "Teste" ou "test")?')) {
                 return;
@@ -1267,6 +1379,8 @@
         window.debugStorage = debugStorage;
         window.fixProductsStatus = fixProductsStatus;
         window.cleanDuplicateProducts = cleanDuplicateProducts;
+        window.optimizeStorage = optimizeStorage;
+        window.addShopeeLinksToAll = addShopeeLinksToAll;
         window.clearAllTestProducts = clearAllTestProducts;
         window.resetToDefaults = resetToDefaults;
         window.toggleDebugMenu = toggleDebugMenu;
