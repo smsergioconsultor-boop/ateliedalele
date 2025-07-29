@@ -552,6 +552,21 @@
                     <p class="text-gray-600">Guia rápido para adicionar imagens aos seus produtos</p>
                 </div>
 
+                <!-- ALERTA DE QUOTA -->
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-xl mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-red-800 mb-3">🚨 Problema Detectado: Quota de Memória Cheia</h3>
+                            <p class="text-red-700 mb-3">Se você está vendo erro "QuotaExceededError", clique no botão abaixo para corrigir:</p>
+                            <button onclick="solucaoRapidaQuota()" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors animate-pulse">
+                                <i class="fas fa-tools mr-2"></i>
+                                🔧 CORRIGIR ERRO DE QUOTA AGORA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Instruções Claras -->
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
                     <div class="flex items-start">
@@ -580,6 +595,11 @@
                             🎭 Ver Demonstração
                         </button>
                         
+                        <button onclick="solucaoRapidaQuota()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors animate-pulse">
+                            <i class="fas fa-tools mr-2"></i>
+                            🔧 Corrigir Erro de Quota
+                        </button>
+                        
                         <button onclick="testAllImageIcons()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
                             <i class="fas fa-play mr-2"></i>
                             Testar Todos os Ícones
@@ -593,6 +613,21 @@
                         <button onclick="testImageSystem()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
                             <i class="fas fa-cog mr-2"></i>
                             Testar Sistema Completo
+                        </button>
+                        
+                        <button onclick="mostrarStatusStorage()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                            <i class="fas fa-chart-bar mr-2"></i>
+                            📊 Ver Status Storage
+                        </button>
+                        
+                        <button onclick="limparStorage()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                            <i class="fas fa-broom mr-2"></i>
+                            🧹 Limpar Storage
+                        </button>
+                        
+                        <button onclick="limpezaDeEmergencia()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            🚨 Limpeza de Emergência
                         </button>
                     </div>
                 </div>
@@ -1106,15 +1141,35 @@
                 // Adiciona novo produto
                 products.push(newProduct);
 
-                // Verifica espaço disponível antes de salvar
-                const dataString = JSON.stringify(products);
-                if (!checkStorageSpace(dataString)) {
-                    showErrorMessage("Limite de armazenamento atingido! Remova produtos ou imagens antigas.");
-                    return false;
-                }
+                // Verifica espaço e limpa se necessário
+                try {
+                    if (!verificarEspacoAntesDeSalvar(products)) {
+                        showErrorMessage("Limite de armazenamento atingido! Executando limpeza automática...");
+                        limparStorage();
+                        
+                        // Tenta novamente após limpeza
+                        if (!verificarEspacoAntesDeSalvar(products)) {
+                            showErrorMessage("Espaço insuficiente mesmo após limpeza. Remova produtos ou imagens.");
+                            return false;
+                        }
+                    }
 
-                // Salva
-                localStorage.setItem("atelieProducts", dataString);
+                    // Salva
+                    localStorage.setItem("atelieProducts", JSON.stringify(products));
+                    console.log('✅ Produto salvo com sucesso');
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao salvar produto:', error);
+                    if (error.name === 'QuotaExceededError') {
+                        showErrorMessage("Memória cheia! Execute limpeza manual ou remova produtos.");
+                        
+                        // Tenta limpeza de emergência
+                        limparStorage();
+                        
+                        return false;
+                    }
+                    throw error;
+                }
 
                 // Atualiza UI
                 renderProductList(products);
@@ -3349,6 +3404,15 @@
             // Executa verificação de integridade
             checkAndFixDataIntegrity();
             
+            // Verifica storage logo no início
+            const storageStatus = monitorarStorage();
+            if (storageStatus.status === 'warning') {
+                console.warn('⚠️ Storage quase cheio detectado!');
+                setTimeout(() => {
+                    showNotification('⚠️ Memória quase cheia! Considere limpeza na seção Imagens.', 'warning');
+                }, 2000);
+            }
+            
             // Aguarda um pouco e executa testes
             setTimeout(() => {
                 console.log('🧪 Executando testes automáticos...');
@@ -3361,7 +3425,9 @@
                 
                 // Mostra notificação de boas-vindas
                 setTimeout(() => {
-                    showNotification('Sistema carregado! Use a seção "Imagens" para ver como funciona.', 'success');
+                    if (storageStatus.status !== 'warning') {
+                        showNotification('Sistema carregado! Use a seção "Imagens" para ver como funciona.', 'success');
+                    }
                 }, 1000);
                 
             }, 1000);
@@ -4021,6 +4087,337 @@
 
         // Expõe função de teste globalmente
         window.testeRapido = testeRapido;
+
+        /**
+         * Monitora o uso do localStorage
+         */
+        function monitorarStorage() {
+            try {
+                let totalSize = 0;
+                const keys = Object.keys(localStorage);
+                const usage = {};
+                
+                keys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    const size = new Blob([value]).size;
+                    totalSize += size;
+                    usage[key] = {
+                        size: size,
+                        sizeFormatted: formatBytes(size),
+                        items: key.includes('Products') ? JSON.parse(value || '[]').length : 1
+                    };
+                });
+                
+                const totalFormatted = formatBytes(totalSize);
+                const limitEstimated = 5 * 1024 * 1024; // 5MB
+                const percentUsed = ((totalSize / limitEstimated) * 100).toFixed(1);
+                
+                console.log('📊 USO DO LOCALSTORAGE:');
+                console.log(`Total usado: ${totalFormatted} (${percentUsed}%)`);
+                console.table(usage);
+                
+                if (totalSize > limitEstimated * 0.8) {
+                    console.warn('⚠️ localStorage quase cheio! Considere limpeza.');
+                    return { status: 'warning', totalSize, usage };
+                }
+                
+                return { status: 'ok', totalSize, usage };
+                
+            } catch (error) {
+                console.error('Erro ao monitorar storage:', error);
+                return { status: 'error', error };
+            }
+        }
+
+        /**
+         * Formata bytes em formato legível
+         */
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        /**
+         * Limpa dados duplicados e otimiza localStorage
+         */
+        function limparStorage() {
+            try {
+                console.log('🧹 Iniciando limpeza do localStorage...');
+                
+                // Monitora antes da limpeza
+                const beforeCleanup = monitorarStorage();
+                
+                // Remove produtos duplicados
+                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                const uniqueProducts = [];
+                const seenIds = new Set();
+                
+                products.forEach(product => {
+                    if (!seenIds.has(product.id)) {
+                        seenIds.add(product.id);
+                        // Remove imagens muito grandes (>500KB)
+                        if (product.images) {
+                            product.images = product.images.filter(img => {
+                                if (img.src && img.src.length > 500000) {
+                                    console.log(`🗑️ Removendo imagem grande de ${product.name}`);
+                                    return false;
+                                }
+                                return true;
+                            });
+                        }
+                        uniqueProducts.push(product);
+                    }
+                });
+                
+                localStorage.setItem('atelieProducts', JSON.stringify(uniqueProducts));
+                
+                // Remove dados antigos/desnecessários
+                const keysToRemove = [];
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('temp') || key.includes('old') || key.includes('backup')) {
+                        keysToRemove.push(key);
+                    }
+                });
+                
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log(`🗑️ Removido: ${key}`);
+                });
+                
+                // Monitora depois da limpeza
+                const afterCleanup = monitorarStorage();
+                
+                const savedBytes = beforeCleanup.totalSize - afterCleanup.totalSize;
+                console.log(`✅ Limpeza concluída! Economizados: ${formatBytes(savedBytes)}`);
+                
+                showNotification(`Limpeza concluída! Espaço liberado: ${formatBytes(savedBytes)}`, 'success');
+                
+                return { 
+                    success: true, 
+                    before: beforeCleanup.totalSize, 
+                    after: afterCleanup.totalSize, 
+                    saved: savedBytes 
+                };
+                
+            } catch (error) {
+                console.error('Erro na limpeza:', error);
+                showNotification('Erro durante a limpeza do storage', 'error');
+                return { success: false, error };
+            }
+        }
+
+        /**
+         * Verifica espaço antes de salvar dados
+         */
+        function verificarEspacoAntesDeSalvar(data) {
+            try {
+                const dataSize = new Blob([JSON.stringify(data)]).size;
+                const currentUsage = monitorarStorage();
+                const limitEstimated = 5 * 1024 * 1024; // 5MB
+                
+                if (currentUsage.totalSize + dataSize > limitEstimated * 0.9) {
+                    console.warn('⚠️ Pouco espaço disponível, executando limpeza...');
+                    limparStorage();
+                    
+                    // Verifica novamente após limpeza
+                    const newUsage = monitorarStorage();
+                    if (newUsage.totalSize + dataSize > limitEstimated * 0.9) {
+                        throw new Error('Espaço insuficiente mesmo após limpeza');
+                    }
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Erro na verificação de espaço:', error);
+                return false;
+            }
+        }
+
+        // Expõe funções globalmente
+        window.monitorarStorage = monitorarStorage;
+        window.limparStorage = limparStorage;
+        window.verificarEspacoAntesDeSalvar = verificarEspacoAntesDeSalvar;
+
+        /**
+         * LIMPEZA DE EMERGÊNCIA - Remove tudo e mantém apenas o essencial
+         */
+        function limpezaDeEmergencia() {
+            const confirm1 = confirm('⚠️ LIMPEZA DE EMERGÊNCIA ⚠️\n\nIsto irá:\n- Remover TODOS os dados\n- Manter apenas produtos padrão\n- Limpar todas as imagens\n\nContinuar?');
+            
+            if (!confirm1) return false;
+            
+            const confirm2 = confirm('🚨 ÚLTIMA CHANCE! 🚨\n\nTem CERTEZA ABSOLUTA?\nEsta ação é IRREVERSÍVEL!');
+            
+            if (!confirm2) return false;
+            
+            try {
+                console.log('🚨 EXECUTANDO LIMPEZA DE EMERGÊNCIA...');
+                
+                // Backup dos dados antes de limpar (apenas console)
+                const backup = {
+                    products: localStorage.getItem('atelieProducts'),
+                    images: localStorage.getItem('atelieImages'),
+                    testimonials: localStorage.getItem('atelieTestimonials')
+                };
+                console.log('📦 Backup dos dados (copie se necessário):', backup);
+                
+                // Remove TUDO
+                localStorage.clear();
+                
+                // Recria apenas estrutura básica
+                localStorage.setItem('atelieProducts', '[]');
+                localStorage.setItem('excludedProducts', '[]');
+                
+                console.log('✅ Limpeza de emergência concluída!');
+                showNotification('🚨 Limpeza de emergência concluída! Página será recarregada.', 'success');
+                
+                // Recarrega a página após 2 segundos
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Erro na limpeza de emergência:', error);
+                alert('Erro crítico! Feche e abra o navegador.');
+                return false;
+            }
+        }
+
+        /**
+         * Interface de monitoramento de storage
+         */
+        function mostrarStatusStorage() {
+            const usage = monitorarStorage();
+            
+            let message = `📊 STATUS DO STORAGE:\n\n`;
+            
+            if (usage.status === 'error') {
+                message += `❌ Erro: ${usage.error}`;
+            } else {
+                message += `💾 Total usado: ${formatBytes(usage.totalSize)}\n`;
+                message += `📈 % do limite: ${((usage.totalSize / (5*1024*1024)) * 100).toFixed(1)}%\n\n`;
+                
+                message += `📋 Detalhes:\n`;
+                Object.keys(usage.usage).forEach(key => {
+                    const item = usage.usage[key];
+                    message += `• ${key}: ${item.sizeFormatted}`;
+                    if (item.items > 1) message += ` (${item.items} itens)`;
+                    message += `\n`;
+                });
+                
+                if (usage.status === 'warning') {
+                    message += `\n⚠️ STORAGE QUASE CHEIO!`;
+                }
+            }
+            
+            alert(message);
+        }
+
+        // Expõe funções de emergência globalmente
+        window.limpezaDeEmergencia = limpezaDeEmergencia;
+        window.mostrarStatusStorage = mostrarStatusStorage;
+
+        /**
+         * SOLUÇÃO RÁPIDA para o erro de quota atual
+         */
+        function solucaoRapidaQuota() {
+            console.log('🚀 EXECUTANDO SOLUÇÃO RÁPIDA PARA QUOTA...');
+            
+            try {
+                // 1. Monitora situação atual
+                console.log('📊 Situação atual:');
+                const statusAntes = monitorarStorage();
+                
+                // 2. Limpa produtos duplicados primeiro
+                console.log('🧹 Limpando duplicatas...');
+                const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+                const uniqueProducts = [];
+                const seenIds = new Set();
+                
+                products.forEach(product => {
+                    if (!seenIds.has(product.id)) {
+                        seenIds.add(product.id);
+                        
+                        // Remove imagens muito pesadas (>200KB)
+                        if (product.images) {
+                            product.images = product.images.filter(img => {
+                                return !img.src || img.src.length <= 200000;
+                            });
+                        }
+                        
+                        uniqueProducts.push(product);
+                    }
+                });
+                
+                // 3. Salva a versão limpa
+                localStorage.setItem('atelieProducts', JSON.stringify(uniqueProducts));
+                
+                // 4. Remove dados temporários
+                const keysToRemove = [];
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('temp') || key.includes('cache') || key.includes('old')) {
+                        keysToRemove.push(key);
+                    }
+                });
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                
+                // 5. Monitora após limpeza
+                console.log('📊 Situação após limpeza:');
+                const statusDepois = monitorarStorage();
+                
+                const espacoLiberado = statusAntes.totalSize - statusDepois.totalSize;
+                
+                console.log(`✅ Limpeza concluída! Liberados: ${formatBytes(espacoLiberado)}`);
+                
+                // 6. Testa se agora consegue adicionar produto
+                try {
+                    const testProduct = {
+                        id: 'test-quota-fix',
+                        name: 'Teste Quota',
+                        description: 'Produto de teste para verificar quota',
+                        price: '1.00',
+                        category: 'test',
+                        images: [],
+                        status: 'Ativo'
+                    };
+                    
+                    const updatedProducts = [...uniqueProducts, testProduct];
+                    localStorage.setItem('atelieProducts', JSON.stringify(updatedProducts));
+                    
+                    // Remove o produto de teste
+                    localStorage.setItem('atelieProducts', JSON.stringify(uniqueProducts));
+                    
+                    console.log('✅ Teste de quota passou! Agora você pode adicionar produtos.');
+                    showNotification(`✅ Problema resolvido! Espaço liberado: ${formatBytes(espacoLiberado)}`, 'success');
+                    
+                    // Remove alerta de quota da interface
+                    const quotaAlert = document.querySelector('.bg-red-50');
+                    if (quotaAlert) {
+                        quotaAlert.style.display = 'none';
+                    }
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('❌ Ainda há problema de quota:', error);
+                    showNotification('❌ Quota ainda crítica. Execute limpeza de emergência.', 'error');
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro na solução rápida:', error);
+                showNotification('❌ Erro na solução rápida. Tente limpeza de emergência.', 'error');
+                return false;
+            }
+        }
+
+        // Expõe função globalmente
+        window.solucaoRapidaQuota = solucaoRapidaQuota;
     </script>
 </body>
 </html> 
