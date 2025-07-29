@@ -1464,14 +1464,19 @@
                         localStorage.setItem('excludedProducts', JSON.stringify(excludedProducts));
                     }
                     
-                    // Remove from UI
+                    // Remove from UI immediately
                     const row = document.querySelector(`tr[data-product-id="${productId}"]`);
                     if (row) row.remove();
                     
                     showSuccessMessage('Produto removido com sucesso!');
                     
-                    // Sync with loja.html
-                    refreshStoreImages();
+                    // Simple sync without events (direct message only)
+                    if (window.opener && window.opener.location.href.includes('loja.html')) {
+                        window.opener.postMessage({
+                            type: 'PRODUCT_DELETED',
+                            productId: productId
+                        }, '*');
+                    }
                 }
                 return;
             }
@@ -1484,11 +1489,20 @@
             if (productIndex !== -1) {
                 products.splice(productIndex, 1); // Remove o produto do array
                 localStorage.setItem("atelieProducts", JSON.stringify(products));
-                renderProductList(products);
+                
+                // Update UI immediately without triggering events
+                const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+                if (row) row.remove();
+                
                 showSuccessMessage("Produto excluído com sucesso!");
                 
-                // Sync with loja.html
-                refreshStoreImages();
+                // Simple sync without events (direct message only)
+                if (window.opener && window.opener.location.href.includes('loja.html')) {
+                    window.opener.postMessage({
+                        type: 'PRODUCT_DELETED',
+                        productId: productId
+                    }, '*');
+                }
             } else {
                 showErrorMessage("Produto não encontrado!");
             }
@@ -1985,14 +1999,14 @@
         }
 
         /**
-         * Atualiza as imagens da loja em tempo real
+         * Atualiza as imagens da loja em tempo real (simplificado)
          */
         function refreshStoreImages() {
             try {
                 // Get updated products from localStorage
                 const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
                 
-                // Update loja.html if it's open in another tab/window
+                // Update loja.html if it's open in another tab/window (direct message only)
                 if (window.opener && window.opener.location.href.includes('loja.html')) {
                     window.opener.postMessage({
                         type: 'UPDATE_PRODUCTS',
@@ -2000,12 +2014,7 @@
                     }, '*');
                 }
                 
-                // Trigger custom event for same-tab updates (only one event)
-                window.dispatchEvent(new CustomEvent('storeImagesUpdated', {
-                    detail: { products: products }
-                }));
-                
-                console.log('Store images refresh triggered');
+                console.log('Store images refresh triggered (simplified)');
             } catch (error) {
                 console.error('Error refreshing store images:', error);
             }
@@ -2213,31 +2222,19 @@
         }
 
         /**
-         * Configura listeners de eventos
+         * Configura listeners de eventos (simplificado para evitar loops)
          */
         function setupEventListeners() {
-            // Storage event listener para sincronização entre abas
+            // Storage event listener para sincronização entre abas (apenas depoimentos)
             window.addEventListener('storage', function(e) {
-                if (e.key === 'atelieProducts') {
-                    console.log('Produtos atualizados em outra aba');
-                    loadProductsFromStorage();
-                }
                 if (e.key === 'atelieTestimonials') {
                     console.log('Depoimentos atualizados em outra aba');
                     loadTestimonialsFromStorage();
                 }
             });
 
-            // Custom events para sincronização
-            window.addEventListener('productImagesUpdated', function(e) {
-                console.log('Imagens de produtos atualizadas');
-                loadProductsFromStorage();
-            });
-
-            window.addEventListener('storeImagesUpdated', function(e) {
-                console.log('Imagens da loja atualizadas');
-                loadProductsFromStorage();
-            });
+            // Removidos event listeners que causavam loops de recarregamento
+            console.log('Event listeners configurados (modo simplificado)');
         }
 
         /**

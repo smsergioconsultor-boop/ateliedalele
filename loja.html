@@ -768,36 +768,27 @@
             loadProducts();
         });
         
-        // Listen for storage changes (when admin updates images)
+        // Listen for storage changes (only excluded products to avoid loops)
         window.addEventListener('storage', function(e) {
-            if (e.key === 'atelieProducts' || e.key === 'excludedProducts') {
-                console.log('Dados atualizados no localStorage, recarregando produtos...');
+            if (e.key === 'excludedProducts') {
+                console.log('Produtos excluídos atualizados, recarregando...');
                 loadProducts();
             }
         });
         
-        // Also listen for custom events (for same-tab updates)
-        window.addEventListener('productImagesUpdated', function(e) {
-            console.log('Imagens atualizadas, recarregando produtos...');
-            if (e.detail && e.detail.products) {
-                updateProductCardsInRealTime(e.detail.products);
-            } else {
-                loadProducts();
-            }
-        });
-        
-        // Listen for postMessage from admin dashboard
+        // Listen for postMessage from admin dashboard (simplified)
         window.addEventListener('message', function(e) {
             if (e.data && e.data.type === 'UPDATE_PRODUCTS') {
                 console.log('Recebida atualização de produtos via postMessage');
                 updateProductCardsInRealTime(e.data.products);
+            } else if (e.data && e.data.type === 'PRODUCT_DELETED') {
+                console.log('Produto excluído, removendo da UI...');
+                const productCard = document.querySelector(`[data-product-id="${e.data.productId}"]`);
+                if (productCard) {
+                    productCard.remove();
+                    console.log(`Produto ${e.data.productId} removido da loja`);
+                }
             }
-        });
-        
-        // Listen for custom events from admin dashboard
-        window.addEventListener('storeImagesUpdated', function(e) {
-            console.log('Evento de atualização recebido, recarregando produtos...');
-            loadProducts();
         });
         
         // Function to update product cards in real-time without full reload
