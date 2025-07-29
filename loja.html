@@ -526,18 +526,40 @@
         // Debounce function to prevent multiple rapid calls
         let loadProductsTimeout;
         
-        // 🚀 SISTEMA SIMPLIFICADO - Sincronizado com novo admin
+                // 🚀 SISTEMA SIMPLIFICADO - Sincronizado com novo admin
         async function loadProducts() {
             console.log('🔄 Carregando produtos do novo sistema...');
             
-                const productsGrid = document.getElementById('productsGrid');
+            const productsGrid = document.getElementById('productsGrid');
             
             try {
                 // Carrega produtos do localStorage (mesmo sistema do admin)
                 let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
                 
+                // DEBUG: Mostra detalhes dos produtos carregados
+                console.log('🔍 DEBUG: Produtos carregados do localStorage:', products.length);
+                products.forEach((product, index) => {
+                    console.log(`📦 Produto ${index + 1}:`, {
+                        id: product.id,
+                        name: product.name,
+                        status: product.status,
+                        imagesCount: product.images?.length || 0,
+                        primarySrc: product.primarySrc ? 'Sim' : 'Não',
+                        hasImages: product.images && product.images.length > 0 ? 'Sim' : 'Não'
+                    });
+                    
+                    if (product.images && product.images.length > 0) {
+                        console.log(`🖼️ Imagens do produto "${product.name}":`, product.images.map(img => ({
+                            id: img.id,
+                            name: img.name,
+                            srcLength: img.src ? img.src.length : 0
+                        })));
+                    }
+                });
+                
                 // Se não houver produtos salvos, usar produtos padrão
                 if (products.length === 0) {
+                    console.log('📝 Usando produtos padrão...');
                     products = getDefaultProducts();
                     // Salva os produtos padrão para sincronizar
                     localStorage.setItem('atelieProducts', JSON.stringify(products));
@@ -546,7 +568,7 @@
                 // Filtra apenas produtos ativos
                 const activeProducts = products.filter(product => product.status === 'ativo');
                 
-                console.log(`📦 ${activeProducts.length} produtos ativos encontrados`);
+                console.log(`📦 ${activeProducts.length} produtos ativos de ${products.length} total`);
                 
                 // Limpa grid
                 productsGrid.innerHTML = '';
@@ -557,12 +579,16 @@
                 }
                 
                 // Renderiza produtos
-                activeProducts.forEach(product => {
+                activeProducts.forEach((product, index) => {
+                    console.log(`🎨 Renderizando produto ${index + 1}: "${product.name}"`);
+                    const imageUrl = getBestImageForProduct(product);
+                    console.log(`🖼️ Imagem para "${product.name}":`, imageUrl ? 'Encontrada' : 'Não encontrada');
+                    
                     const productCard = createSimpleProductCard(product);
                     productsGrid.appendChild(productCard);
                 });
                 
-                console.log('✅ Produtos carregados com sucesso!');
+                console.log('✅ Produtos renderizados com sucesso!');
                 
             } catch (error) {
                 console.error('❌ Erro ao carregar produtos:', error);
@@ -734,7 +760,147 @@
             `;
         }
         
-        // *** FUNÇÕES ANTIGAS REMOVIDAS - Sistema simplificado em uso ***
+        // ==========================================
+        // FUNÇÕES DE DEBUG E SINCRONIZAÇÃO  
+        // ==========================================
+        
+        function debugProductsInStore() {
+            console.log('🔍 === DEBUG LOJA ===');
+            
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            console.log('Total produtos no localStorage:', products.length);
+            
+            if (products.length === 0) {
+                console.log('❌ Nenhum produto encontrado no localStorage!');
+                return;
+            }
+            
+            console.table(products.map(p => ({
+                id: p.id,
+                name: p.name,
+                status: p.status,
+                images: p.images?.length || 0,
+                primarySrc: p.primarySrc ? 'Sim' : 'Não'
+            })));
+            
+            // Testa função de obter imagem
+            products.forEach(product => {
+                const imageUrl = getBestImageForProduct(product);
+                console.log(`🖼️ "${product.name}": ${imageUrl ? 'TEM IMAGEM' : 'SEM IMAGEM'}`);
+                if (imageUrl) {
+                    console.log('   URL:', imageUrl.substring(0, 100) + '...');
+                }
+            });
+        }
+        
+        function forceReloadProducts() {
+            console.log('🔄 Forçando reload dos produtos...');
+            
+            // Recarrega produtos
+            loadProducts();
+            
+            console.log('✅ Reload forçado concluído!');
+        }
+        
+        function testImageSync() {
+            console.log('🧪 Testando sincronização de imagens...');
+            
+            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
+            
+            let hasImageProblems = false;
+            
+            products.forEach(product => {
+                if (product.images && product.images.length > 0) {
+                    console.log(`✅ "${product.name}" tem ${product.images.length} imagem(ns)`);
+                    
+                    product.images.forEach((image, idx) => {
+                        if (!image.src || image.src.length < 100) {
+                            console.error(`❌ Imagem ${idx + 1} de "${product.name}" parece corrompida`);
+                            hasImageProblems = true;
+                        } else {
+                            console.log(`   ✅ Imagem ${idx + 1}: OK (${(image.src.length / 1024).toFixed(1)}KB)`);
+                        }
+                    });
+                } else {
+                    console.log(`⚠️ "${product.name}" não tem imagens`);
+                }
+            });
+            
+            if (hasImageProblems) {
+                console.warn('⚠️ Problemas de imagens detectados! Execute limpeza no admin.');
+            } else {
+                console.log('✅ Todas as imagens parecem OK!');
+            }
+        }
+        
+        // Exposição global para debug
+        window.debugProductsInStore = debugProductsInStore;
+        window.forceReloadProducts = forceReloadProducts;
+        window.testImageSync = testImageSync;
+        
+        // ==========================================
+        // PAINEL DE DEBUG TEMPORÁRIO
+        // ==========================================
+        
+        function createDebugPanel() {
+            // Remove painel existente se houver
+            const existingPanel = document.getElementById('debugPanel');
+            if (existingPanel) {
+                existingPanel.remove();
+                return;
+            }
+            
+            const debugPanel = document.createElement('div');
+            debugPanel.id = 'debugPanel';
+            debugPanel.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 15px;
+                border-radius: 10px;
+                z-index: 9999;
+                font-family: monospace;
+                font-size: 12px;
+                max-width: 300px;
+                border: 2px solid #f472b6;
+            `;
+            
+            debugPanel.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 10px; color: #f472b6;">
+                    🔧 DEBUG LOJA
+                </div>
+                <button onclick="debugProductsInStore()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #3b82f6; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                    🔍 Debug Produtos
+                </button>
+                <button onclick="forceReloadProducts()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #10b981; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                    🔄 Reload Produtos
+                </button>
+                <button onclick="testImageSync()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #f59e0b; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                    🧪 Test Imagens
+                </button>
+                <button onclick="document.getElementById('debugPanel').remove()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #ef4444; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                    ❌ Fechar
+                </button>
+                <div style="font-size: 10px; margin-top: 10px; color: #9ca3af;">
+                    Console (F12) para ver logs
+                </div>
+            `;
+            
+            document.body.appendChild(debugPanel);
+        }
+        
+        // Atalho para debug: Ctrl+D ou F2
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && e.key === 'd') || e.key === 'F2') {
+                e.preventDefault();
+                createDebugPanel();
+            }
+        });
+        
+        // Exposição global
+        window.createDebugPanel = createDebugPanel;
 
 
 
