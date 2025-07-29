@@ -697,7 +697,321 @@
         // ==========================================
         
         function manageImages(productId) {
-            showNotification('Sistema de imagens em desenvolvimento.', 'info');
+            const product = APP_STATE.products.find(p => p.id === productId);
+            if (!product) {
+                showNotification('Produto não encontrado.', 'error');
+                return;
+            }
+            
+            showImageModal(product);
+        }
+        
+        // ==========================================
+        // SISTEMA DE IMAGENS
+        // ==========================================
+        
+        function showImageModal(product) {
+            const modalId = 'imageModal';
+            
+            const modalHTML = `
+                <div id="${modalId}" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                        <div class="flex justify-between items-center p-6 border-b">
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                <i class="fas fa-images mr-2 text-purple-600"></i>
+                                Gerenciar Imagens - ${product.name}
+                            </h3>
+                            <button onclick="closeModal('${modalId}')" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Upload Area -->
+                        <div class="p-6 border-b bg-gray-50">
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition-colors cursor-pointer" 
+                                 id="dropZone" onclick="document.getElementById('imageUpload').click()">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                <h4 class="text-lg font-medium text-gray-700 mb-2">Upload de Imagens</h4>
+                                <p class="text-gray-500 mb-4">Clique aqui ou arraste imagens para fazer upload</p>
+                                <p class="text-sm text-gray-400">Formatos: JPG, PNG, GIF (máx. 2MB por imagem)</p>
+                                <input type="file" id="imageUpload" multiple accept="image/*" style="display: none">
+                            </div>
+                        </div>
+                        
+                        <!-- Current Images -->
+                        <div class="p-6">
+                            <h4 class="text-md font-semibold text-gray-700 mb-4">
+                                <i class="fas fa-folder-open mr-2"></i>
+                                Imagens Atuais (${product.images?.length || 0})
+                            </h4>
+                            
+                            <div id="imageGallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 min-h-[200px]">
+                                ${renderImageGallery(product.images || [])}
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="flex justify-between items-center p-6 border-t bg-gray-50">
+                            <div class="text-sm text-gray-500">
+                                💡 Dica: A primeira imagem será usada como capa do produto
+                            </div>
+                            <button onclick="closeModal('${modalId}')" 
+                                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                                <i class="fas fa-check mr-2"></i>
+                                Concluído
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modalsContainer').innerHTML = modalHTML;
+            
+            // Setup drag and drop
+            setupImageDragDrop(product.id);
+            
+            // Setup file input
+            document.getElementById('imageUpload').addEventListener('change', function(e) {
+                handleImageUpload(e.target.files, product.id);
+            });
+        }
+        
+        function renderImageGallery(images) {
+            if (!images || images.length === 0) {
+                return `
+                    <div class="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
+                        <i class="fas fa-image text-6xl mb-4"></i>
+                        <p class="text-lg">Nenhuma imagem adicionada</p>
+                        <p class="text-sm">Faça upload da primeira imagem</p>
+                    </div>
+                `;
+            }
+            
+            return images.map((image, index) => `
+                <div class="relative group bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="aspect-square relative">
+                        <img src="${image.src}" 
+                             alt="Imagem ${index + 1}"
+                             class="w-full h-full object-cover">
+                        
+                        ${index === 0 ? `
+                            <div class="absolute top-2 left-2">
+                                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                    <i class="fas fa-star mr-1"></i>Principal
+                                </span>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Overlay com ações -->
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div class="flex space-x-2">
+                                ${index > 0 ? `
+                                    <button onclick="moveImageToFirst('${image.id}')" 
+                                            class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
+                                            title="Tornar Principal">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                ` : ''}
+                                <button onclick="downloadImage('${image.src}', '${image.name}')" 
+                                        class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors"
+                                        title="Download">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button onclick="removeImage('${image.id}')" 
+                                        class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                                        title="Remover">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Info da imagem -->
+                    <div class="p-3">
+                        <p class="text-sm text-gray-600 truncate">${image.name}</p>
+                        <p class="text-xs text-gray-400">${formatBytes(image.size || 0)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function setupImageDragDrop(productId) {
+            const dropZone = document.getElementById('dropZone');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight(e) {
+                dropZone.classList.add('border-purple-400', 'bg-purple-50');
+            }
+            
+            function unhighlight(e) {
+                dropZone.classList.remove('border-purple-400', 'bg-purple-50');
+            }
+            
+            dropZone.addEventListener('drop', function(e) {
+                const files = e.dataTransfer.files;
+                handleImageUpload(files, productId);
+            }, false);
+        }
+        
+        function handleImageUpload(files, productId) {
+            const validFiles = Array.from(files).filter(file => {
+                if (!file.type.startsWith('image/')) {
+                    showNotification(`${file.name} não é uma imagem válida.`, 'error');
+                    return false;
+                }
+                
+                if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                    showNotification(`${file.name} é muito grande (máx. 2MB).`, 'error');
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            if (validFiles.length === 0) return;
+            
+            showNotification(`Processando ${validFiles.length} imagem(ns)...`, 'info');
+            
+            let processed = 0;
+            const totalFiles = validFiles.length;
+            
+            validFiles.forEach(file => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const imageData = {
+                        id: generateId(),
+                        src: e.target.result,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        uploadedAt: new Date().toISOString()
+                    };
+                    
+                    // Adicionar imagem ao produto
+                    addImageToProduct(productId, imageData);
+                    
+                    processed++;
+                    if (processed === totalFiles) {
+                        showNotification(`${totalFiles} imagem(ns) adicionada(s) com sucesso!`, 'success');
+                        
+                        // Atualizar galeria
+                        const product = APP_STATE.products.find(p => p.id === productId);
+                        document.getElementById('imageGallery').innerHTML = renderImageGallery(product.images);
+                        
+                        // Atualizar tabela principal
+                        renderProducts();
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function addImageToProduct(productId, imageData) {
+            const products = [...APP_STATE.products];
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) return;
+            
+            if (!product.images) {
+                product.images = [];
+            }
+            
+            // Adicionar imagem
+            product.images.push(imageData);
+            
+            // Se é a primeira imagem, atualizar primarySrc
+            if (product.images.length === 1) {
+                // Usar uma versão reduzida para primarySrc (para economizar espaço)
+                product.primarySrc = imageData.src;
+            }
+            
+            product.updatedAt = new Date().toISOString();
+            
+            // Salvar (com verificação de quota)
+            saveProducts(products);
+        }
+        
+        function moveImageToFirst(imageId) {
+            const products = [...APP_STATE.products];
+            
+            products.forEach(product => {
+                if (product.images) {
+                    const imageIndex = product.images.findIndex(img => img.id === imageId);
+                    if (imageIndex > 0) {
+                        // Move para primeira posição
+                        const [image] = product.images.splice(imageIndex, 1);
+                        product.images.unshift(image);
+                        
+                        // Atualiza primarySrc
+                        product.primarySrc = image.src;
+                        product.updatedAt = new Date().toISOString();
+                        
+                        if (saveProducts(products)) {
+                            // Atualizar galeria
+                            document.getElementById('imageGallery').innerHTML = renderImageGallery(product.images);
+                            renderProducts();
+                            showNotification('Imagem definida como principal!', 'success');
+                        }
+                    }
+                }
+            });
+        }
+        
+        function removeImage(imageId) {
+            if (!confirm('Tem certeza que deseja remover esta imagem?')) return;
+            
+            const products = [...APP_STATE.products];
+            
+            products.forEach(product => {
+                if (product.images) {
+                    const imageIndex = product.images.findIndex(img => img.id === imageId);
+                    if (imageIndex !== -1) {
+                        product.images.splice(imageIndex, 1);
+                        
+                        // Se removeu a primeira imagem, atualizar primarySrc
+                        if (imageIndex === 0 && product.images.length > 0) {
+                            product.primarySrc = product.images[0].src;
+                        } else if (product.images.length === 0) {
+                            product.primarySrc = CONFIG.FALLBACK_IMAGE;
+                        }
+                        
+                        product.updatedAt = new Date().toISOString();
+                        
+                        if (saveProducts(products)) {
+                            // Atualizar galeria
+                            document.getElementById('imageGallery').innerHTML = renderImageGallery(product.images);
+                            renderProducts();
+                            showNotification('Imagem removida com sucesso!', 'success');
+                        }
+                    }
+                }
+            });
+        }
+        
+        function downloadImage(src, name) {
+            const link = document.createElement('a');
+            link.href = src;
+            link.download = name || 'imagem.jpg';
+            link.click();
+            showNotification('Download iniciado!', 'success');
         }
         
         function showStorageInfo() {
