@@ -1451,6 +1451,12 @@
                 if (window.currentEditingProductId) {
                     addImageToProduct(window.currentEditingProductId, imageData);
                     showSuccessMessage(`Imagem "${imageData.name}" adicionada com sucesso!`);
+                    
+                    // Atualiza modal se estiver aberto
+                    const modal = document.getElementById('imageModal');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        addImageToGallery(imageData, window.currentEditingProductId);
+                    }
                 }
             }
         }
@@ -1508,7 +1514,6 @@
             
             showWarningMessage(`${imagesToMigrate} imagens serão migradas para storage infinito. Isso pode demorar um pouco...`);
             
-            // TODO: Implementar migração automática
             console.log('🚀 Migração será implementada em breve!');
         }
         
@@ -1544,7 +1549,7 @@
             updateImageInterface();
             
             // Resto da inicialização...
-            updateStatistics();
+            updateStats();
             loadProducts();
             console.log('✨ Admin Panel inicializado com storage infinito!');
         }
