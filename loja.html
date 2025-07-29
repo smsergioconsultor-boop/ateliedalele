@@ -554,10 +554,71 @@
             console.log('Produtos filtrados:', filteredProducts);
             console.log('Filtro atual:', currentFilter);
             
-            // Testa imagens
+            // Testa imagens e mostra tipo de storage
             allProducts.forEach(product => {
                 const imageUrl = getBestImage(product);
-                console.log(`${product.name}: ${imageUrl ? 'TEM IMAGEM' : 'SEM IMAGEM'}`);
+                if (imageUrl) {
+                    const isCloudinary = imageUrl.includes('cloudinary.com');
+                    const isBase64 = imageUrl.startsWith('data:');
+                    const storageType = isCloudinary ? '🌩️ Cloudinary' : isBase64 ? '💾 Base64' : '🔗 URL';
+                    
+                    console.log(`🖼️ "${product.name}": TEM IMAGEM (${storageType})`);
+                    
+                    if (product.images && product.images.length > 0) {
+                        console.log(`   📊 Total imagens: ${product.images.length}`);
+                        product.images.forEach((img, idx) => {
+                            const imgType = img.cloudinary ? '🌩️ Cloudinary' : 
+                                           img.src?.startsWith('data:') ? '💾 Base64' : '🔗 URL';
+                            const size = img.size ? `(${(img.size / 1024).toFixed(1)}KB)` : '';
+                            console.log(`   ${idx + 1}. ${img.name || 'Sem nome'} ${imgType} ${size}`);
+                        });
+                    }
+                } else {
+                    console.log(`❌ "${product.name}": SEM IMAGEM`);
+                }
+            });
+            
+            // Estatísticas de storage
+            let cloudinaryCount = 0;
+            let base64Count = 0;
+            let totalSize = 0;
+            
+            allProducts.forEach(product => {
+                if (product.images) {
+                    product.images.forEach(img => {
+                        if (img.cloudinary) {
+                            cloudinaryCount++;
+                        } else if (img.src?.startsWith('data:')) {
+                            base64Count++;
+                            totalSize += img.src.length;
+                        }
+                    });
+                }
+            });
+            
+            console.log('\n📊 ESTATÍSTICAS DE STORAGE:');
+            console.log(`🌩️ Cloudinary: ${cloudinaryCount} imagens (∞ espaço)`);
+            console.log(`💾 Base64: ${base64Count} imagens (${(totalSize / 1024 / 1024).toFixed(1)}MB)`);
+            console.log(`🎯 Total: ${cloudinaryCount + base64Count} imagens`);
+        }
+        
+        // Nova função para testar carregamento de imagens
+        window.testImageLoading = function() {
+            console.log('🧪 Testando carregamento de imagens...');
+            
+            const container = document.getElementById('productsGrid');
+            const productCards = container.querySelectorAll('.product-card img');
+            
+            console.log(`🔍 Encontrados ${productCards.length} elementos de imagem`);
+            
+            productCards.forEach((img, index) => {
+                const product = filteredProducts[index];
+                if (product) {
+                    console.log(`📸 Produto ${index + 1}: "${product.name}"`);
+                    console.log(`   URL: ${img.src.substring(0, 50)}...`);
+                    console.log(`   Carregada: ${img.complete ? '✅' : '⏳'}`);
+                    console.log(`   Dimensões: ${img.naturalWidth}x${img.naturalHeight}`);
+                }
             });
         }
         
