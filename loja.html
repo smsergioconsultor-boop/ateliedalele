@@ -4,1247 +4,568 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loja - Ateliê da Lelê | Produtos Artesanais</title>
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Descubra nossa coleção completa de scrapbooks artesanais, álbuns personalizados e kits criativos. Produtos únicos feitos com amor na Shopee!">
-    <meta name="keywords" content="loja scrapbook, álbum personalizado, kit scrapbook, produtos artesanais, ateliê da lelê">
-    <meta name="author" content="Ateliê da Lelê">
-    <meta name="robots" content="index, follow">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ateliedalelê.com/loja">
-    <meta property="og:title" content="Loja - Ateliê da Lelê | Produtos Artesanais">
-    <meta property="og:description" content="Descubra nossa coleção completa de scrapbooks artesanais e produtos personalizados.">
-    <meta property="og:image" content="https://ateliedalelê.com/images/og-image.jpg">
-    
-    <!-- Tailwind CSS -->
+    <title>Ateliê da Lele - Loja</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'rose-pastel': '#FDF2F8',
-                        'rose-light': '#FCE7F3',
-                        'rose-medium': '#F9A8D4',
-                        'rose-dark': '#EC4899',
-                        'beige': '#F5F5DC',
-                        'gold': '#FFD700',
-                        'cream': '#FFF8DC'
-                    },
-                    fontFamily: {
-                        'cursive': ['Dancing Script', 'cursive'],
-                        'elegant': ['Playfair Display', 'serif']
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Custom CSS for Product Cards -->
     <style>
-        /* Product Card Styles - Corrigido */
+        /* ===== CUSTOM STYLES ===== */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+        }
+        
         .product-card {
             transition: all 0.3s ease;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            min-height: 500px; /* Altura mínima para consistência */
+            backdrop-filter: blur(10px);
         }
         
         .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         
-        .product-image-container {
+        .btn-primary {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+            transform: translateY(-2px);
+        }
+        
+        .logo-text {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .image-placeholder {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
             position: relative;
-            background: #f8f9fa;
-            border-radius: 12px;
             overflow: hidden;
-            height: 280px; /* Altura fixa para consistência */
-            min-height: 280px;
-            flex-shrink: 0; /* Impede que a imagem encolha */
         }
         
-        .product-image-container img {
+        .image-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-            display: block; /* Remove espaços em branco */
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
         }
         
-        .product-image-container:hover img {
-            transform: scale(1.05);
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
         
-        /* Fallback content styles */
-        .fallback-content {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background: linear-gradient(135deg, #fce7f3 0%, #f9a8d4 100%);
-        }
-        
-        .fallback-content i {
-            font-size: 3rem;
-            color: white;
-            margin-bottom: 1rem;
-            opacity: 0.8;
-        }
-        
-        .fallback-content p {
-            color: white;
-            font-weight: 600;
-            font-size: 1.125rem;
-            padding: 0 1rem;
-        }
-        
-        /* Loading indicator */
-        .loading-indicator {
-            position: absolute;
-            inset: 0;
-            background: #f3f4f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        
-        .loading-indicator.hidden {
-            display: none;
-        }
-        
-        /* Product content area */
-        .product-content {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            padding: 1.5rem;
-        }
-        
-        .product-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
-            min-height: 2.8rem; /* Altura mínima para consistência */
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
-        .product-description {
-            color: #6b7280;
-            margin-bottom: 1rem;
-            flex-grow: 1;
-            min-height: 4.5rem; /* Altura mínima para consistência */
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.5;
-        }
-        
-        .product-footer {
-            margin-top: auto;
-            padding-top: 1rem;
-            border-top: 1px solid #f3f4f6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .product-price {
-            font-size: 1.5rem;
-            font-family: 'Dancing Script', cursive;
-            color: #ec4899;
-            font-weight: 700;
-        }
-        
-        .shopee-button {
-            background: #ec4899;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-        
-        .shopee-button:hover {
-            background: rgba(236, 72, 153, 0.9);
-            transform: scale(1.05);
-        }
-        
-        .shopee-button i {
-            margin-right: 0.5rem;
-        }
-        
-        /* Line clamp utilities */
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
-        /* Loading animation */
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        
-        .fa-spin {
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #ec4899;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
         
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .product-image-container {
-                height: 240px !important;
-                min-height: 240px;
-            }
-            
-            .product-card {
-                min-height: 460px;
-            }
-        }
-        
-        @media (max-width: 640px) {
-            .product-image-container {
-                height: 200px !important;
-                min-height: 200px;
-            }
-            
-            .product-card {
-                min-height: 420px;
-            }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="bg-rose-pastel font-sans">
-    <!-- WhatsApp Button Fixed with Tooltip -->
-    <div class="fixed bottom-6 right-6 z-50 group">
-        <a href="https://wa.me/5511999999999?text=Olá! Gostaria de saber mais sobre os produtos do Ateliê da Lelê" 
-           target="_blank" 
-           class="bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 hover:scale-110 block">
-            <i class="fab fa-whatsapp text-2xl"></i>
-        </a>
-        <!-- Tooltip -->
-        <div class="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-            Fale Conosco
-            <div class="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <!-- Logo -->
-                <div class="flex items-center">
-                    <h1 class="text-2xl md:text-3xl font-cursive text-rose-medium font-bold">
-                        Ateliê da Lelê
-                    </h1>
+<body class="gradient-bg min-h-screen">
+    <!-- ===== HEADER ===== -->
+    <header class="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-heart text-3xl text-pink-500"></i>
+                    <h1 class="text-2xl font-bold logo-text">Ateliê da Lele</h1>
                 </div>
                 
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex space-x-8">
-                    <a href="index.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Home</a>
-                    <a href="loja.html" class="text-rose-medium font-semibold">Loja</a>
-                    <a href="sobre.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Sobre</a>
-                    <a href="portfolio.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Portfólio</a>
-                    <a href="contato.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Contato</a>
-                </div>
-                
-                <!-- Social Icons -->
-                <div class="hidden md:flex space-x-4">
-                    <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
-                       class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
-                        <i class="fab fa-instagram text-xl"></i>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-home mr-2"></i>Home
                     </a>
-                    <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
-                       class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
-                        <i class="fas fa-shopping-bag text-xl"></i>
+                    <a href="loja.html" class="text-pink-500 font-semibold">
+                        <i class="fas fa-store mr-2"></i>Loja
+                    </a>
+                    <a href="portfolio.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-images mr-2"></i>Portfólio
+                    </a>
+                    <a href="sobre.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-user mr-2"></i>Sobre
+                    </a>
+                    <a href="contato.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-envelope mr-2"></i>Contato
                     </a>
                 </div>
                 
                 <!-- Mobile Menu Button -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="text-gray-700 hover:text-rose-medium">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                </div>
+                <button id="mobileMenuBtn" class="md:hidden text-gray-700 hover:text-pink-500">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
             </div>
             
             <!-- Mobile Menu -->
-            <div id="mobile-menu" class="hidden md:hidden pb-4">
+            <div id="mobileMenu" class="hidden md:hidden mt-4 pb-4 border-t pt-4">
                 <div class="flex flex-col space-y-4">
-                    <a href="index.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Home</a>
-                    <a href="loja.html" class="text-rose-medium font-semibold">Loja</a>
-                    <a href="sobre.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Sobre</a>
-                    <a href="portfolio.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Portfólio</a>
-                    <a href="contato.html" class="text-gray-700 hover:text-rose-medium transition-colors duration-300">Contato</a>
-                    <div class="flex space-x-4 pt-2">
-                        <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
-                           class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
-                            <i class="fab fa-instagram text-xl"></i>
-                        </a>
-                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
-                           class="text-rose-medium hover:text-rose-medium/80 transition-colors duration-300">
-                            <i class="fas fa-shopping-bag text-xl"></i>
-                        </a>
-                    </div>
+                    <a href="index.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="loja.html" class="text-pink-500 font-semibold">
+                        <i class="fas fa-store mr-2"></i>Loja
+                    </a>
+                    <a href="portfolio.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-images mr-2"></i>Portfólio
+                    </a>
+                    <a href="sobre.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-user mr-2"></i>Sobre
+                    </a>
+                    <a href="contato.html" class="text-gray-700 hover:text-pink-500 transition-colors font-medium">
+                        <i class="fas fa-envelope mr-2"></i>Contato
+                    </a>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </header>
 
-    <!-- Hero Section -->
-    <section class="py-20 bg-gradient-to-br from-rose-pastel via-rose-light to-beige">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-4xl md:text-6xl font-cursive text-rose-medium mb-6">
-                Nossa Loja
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Nossa <span class="logo-text">Loja</span>
             </h1>
-            <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Descubra nossa coleção completa de produtos artesanais. 
-                Cada peça é única e feita com muito amor e carinho.
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Produtos únicos e personalizados para registrar suas memórias mais especiais.
+                Cada peça é feita com carinho e atenção aos detalhes.
             </p>
-            
-            <!-- Fixed Shopee Link -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg max-w-md mx-auto">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">Visite nossa loja na Shopee</h3>
-                <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
-                   class="bg-orange-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-600 transition-all duration-300 hover:scale-105 inline-flex items-center">
-                    <i class="fas fa-shopping-bag mr-2"></i>
-                    Ver na Shopee
-                </a>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Products Grid -->
-    <section class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-4">
-                    Nossos Produtos
-                </h2>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Produtos únicos e personalizados para registrar suas memórias mais especiais.
-                </p>
-            </div>
-            
-            <!-- Grid responsivo com alinhamento consistente -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="productsGrid">
-                <!-- Products will be loaded here dynamically -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Special Offers -->
-    <section class="py-20 bg-rose-light">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-4">
-                    Ofertas Especiais
-                </h2>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Produtos selecionados com preços especiais para você!
-                </p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Special Offer 1 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                    <div class="text-center">
-                        <div class="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold inline-block mb-4">
-                            -20% OFF
-                        </div>
-                        <h3 class="text-2xl font-elegant text-gray-800 mb-4">Kit Completo Scrapbook</h3>
-                        <p class="text-gray-600 mb-6">Kit completo com álbum, papéis, adesivos e acessórios</p>
-                        <div class="flex justify-center items-center space-x-4 mb-6">
-                            <span class="text-3xl font-cursive text-rose-medium">R$ 89,90</span>
-                            <span class="text-lg text-gray-400 line-through">R$ 112,00</span>
-                        </div>
-                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
-                           class="bg-rose-medium text-white px-6 py-3 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
-                            Aproveitar Oferta
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Special Offer 2 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                    <div class="text-center">
-                        <div class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold inline-block mb-4">
-                            FRETE GRÁTIS
-                        </div>
-                        <h3 class="text-2xl font-elegant text-gray-800 mb-4">Combo 2 Álbuns</h3>
-                        <p class="text-gray-600 mb-6">Leve 2 álbuns e ganhe frete grátis para todo Brasil</p>
-                        <div class="flex justify-center items-center space-x-4 mb-6">
-                            <span class="text-3xl font-cursive text-rose-medium">R$ 150,00</span>
-                            <span class="text-lg text-gray-400 line-through">R$ 180,00</span>
-                        </div>
-                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
-                           class="bg-rose-medium text-white px-6 py-3 rounded-full font-semibold hover:bg-rose-medium/90 transition-all duration-300 hover:scale-105">
-                            Comprar Combo
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter -->
-    <section class="py-20 bg-rose-light">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl md:text-4xl font-cursive text-rose-medium mb-4">
-                Fique por Dentro!
-            </h2>
-            <p class="text-gray-600 text-lg mb-8">
-                Cadastre-se para receber novidades, promoções exclusivas e dicas de scrapbook.
-            </p>
-            
-            <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                <input type="email" placeholder="Seu melhor email" 
-                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-medium focus:border-transparent">
-                <button type="submit" 
-                        class="bg-rose-medium text-white px-8 py-3 rounded-lg font-semibold hover:bg-rose-medium/90 transition-colors duration-300">
-                    Cadastrar
+        <!-- Filter Section -->
+        <section class="mb-8">
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <button onclick="filterProducts('all')" class="filter-btn active bg-pink-500 text-white px-6 py-2 rounded-full font-medium transition-all hover:bg-pink-600">
+                    <i class="fas fa-th mr-2"></i>Todos
                 </button>
-            </form>
-        </div>
-    </section>
+                <button onclick="filterProducts('albuns')" class="filter-btn bg-white text-gray-700 px-6 py-2 rounded-full font-medium transition-all hover:bg-pink-50 border">
+                    <i class="fas fa-book mr-2"></i>Álbuns
+                </button>
+                <button onclick="filterProducts('scrapbook')" class="filter-btn bg-white text-gray-700 px-6 py-2 rounded-full font-medium transition-all hover:bg-pink-50 border">
+                    <i class="fas fa-heart mr-2"></i>Scrapbook
+                </button>
+                <button onclick="filterProducts('convites')" class="filter-btn bg-white text-gray-700 px-6 py-2 rounded-full font-medium transition-all hover:bg-pink-50 border">
+                    <i class="fas fa-envelope mr-2"></i>Convites
+                </button>
+            </div>
+        </section>
 
-    <!-- Footer -->
-    <footer class="bg-rose-medium text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="col-span-1 md:col-span-2">
-                    <h3 class="text-2xl font-cursive mb-4">Ateliê da Lelê</h3>
-                    <p class="text-white/80 mb-4">
-                        Transformando memórias em arte através do scrapbook artesanal. 
-                        Cada detalhe é feito com amor e carinho.
+        <!-- Products Grid -->
+        <section id="productsSection">
+            <!-- Loading State -->
+            <div id="loadingState" class="flex items-center justify-center py-16">
+                <div class="text-center">
+                    <div class="loading-spinner mx-auto mb-4"></div>
+                    <p class="text-gray-600 text-lg">Carregando produtos...</p>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div id="productsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Products will be rendered here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-16">
+                <div class="bg-white rounded-2xl p-12 shadow-lg max-w-md mx-auto">
+                    <i class="fas fa-box-open text-6xl text-gray-300 mb-6"></i>
+                    <h3 class="text-2xl font-bold text-gray-700 mb-4">Nenhum produto encontrado</h3>
+                    <p class="text-gray-500 mb-6">
+                        Nossos produtos estão sendo organizados. Volte em breve para ver nossas novidades!
                     </p>
-                    <div class="flex space-x-4">
-                        <a href="https://www.instagram.com/ateliedalelê" target="_blank" 
-                           class="text-white/80 hover:text-white transition-colors duration-300 hover:scale-110">
-                            <i class="fab fa-instagram text-2xl"></i>
-                        </a>
-                        <a href="https://shopee.com.br/ateliedalelê" target="_blank" 
-                           class="text-white/80 hover:text-white transition-colors duration-300 hover:scale-110">
-                            <i class="fas fa-shopping-bag text-2xl"></i>
-                        </a>
-                        <a href="https://wa.me/5511999999999" target="_blank" 
-                           class="text-white/80 hover:text-white transition-colors duration-300 hover:scale-110">
-                            <i class="fab fa-whatsapp text-2xl"></i>
-                        </a>
+                    <a href="contato.html" class="btn-primary text-white px-6 py-3 rounded-lg font-medium inline-block">
+                        <i class="fas fa-envelope mr-2"></i>Entre em Contato
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden text-center py-16">
+                <div class="bg-white rounded-2xl p-12 shadow-lg max-w-md mx-auto">
+                    <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-6"></i>
+                    <h3 class="text-2xl font-bold text-gray-700 mb-4">Ops! Algo deu errado</h3>
+                    <p class="text-gray-500 mb-6">
+                        Não foi possível carregar os produtos. Tente recarregar a página.
+                    </p>
+                    <button onclick="loadProducts()" class="btn-primary text-white px-6 py-3 rounded-lg font-medium">
+                        <i class="fas fa-redo mr-2"></i>Tentar Novamente
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="bg-white/80 backdrop-blur-md mt-16">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold logo-text mb-4">Ateliê da Lele</h3>
+                    <p class="text-gray-600">
+                        Criando memórias especiais através de produtos únicos e personalizados.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Links Rápidos</h4>
+                    <div class="space-y-2">
+                        <a href="index.html" class="block text-gray-600 hover:text-pink-500 transition-colors">Home</a>
+                        <a href="loja.html" class="block text-gray-600 hover:text-pink-500 transition-colors">Loja</a>
+                        <a href="portfolio.html" class="block text-gray-600 hover:text-pink-500 transition-colors">Portfólio</a>
+                        <a href="contato.html" class="block text-gray-600 hover:text-pink-500 transition-colors">Contato</a>
                     </div>
                 </div>
                 
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">Links Rápidos</h4>
-                    <ul class="space-y-2">
-                        <li><a href="index.html" class="text-white/80 hover:text-white transition-colors duration-300">Home</a></li>
-                        <li><a href="loja.html" class="text-white/80 hover:text-white transition-colors duration-300">Loja</a></li>
-                        <li><a href="sobre.html" class="text-white/80 hover:text-white transition-colors duration-300">Sobre</a></li>
-                        <li><a href="portfolio.html" class="text-white/80 hover:text-white transition-colors duration-300">Portfólio</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Contato</h4>
-                    <ul class="space-y-2">
-                        <li class="text-white/80">WhatsApp: (11) 99999-9999</li>
-                        <li class="text-white/80">Email: contato@ateliedalelê.com</li>
-                        <li class="text-white/80">Instagram: @ateliedalelê</li>
-                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Redes Sociais</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-600 hover:text-pink-500 transition-colors text-xl">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-600 hover:text-pink-500 transition-colors text-xl">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="text-gray-600 hover:text-pink-500 transition-colors text-xl">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
             
-            <div class="border-t border-white/20 mt-8 pt-8 text-center">
-                <p class="text-white/60">
-                    © 2024 Ateliê da Lelê. Todos os direitos reservados.
+            <div class="border-t border-gray-200 mt-8 pt-8 text-center">
+                <p class="text-gray-600">
+                    © 2024 Ateliê da Lele. Todos os direitos reservados.
                 </p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Mobile menu toggle
-        document.getElementById('mobile-menu-button').addEventListener('click', function() {
-            const mobileMenu = document.getElementById('mobile-menu');
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Debounce function to prevent multiple rapid calls
-        let loadProductsTimeout;
+        // =============================================
+        // SISTEMA DE PRODUTOS - NOVA LOJA LIMPA
+        // =============================================
         
-                // 🚀 SISTEMA SIMPLIFICADO - Sincronizado com novo admin
-        async function loadProducts() {
-            console.log('🔄 Carregando produtos do novo sistema...');
+        let allProducts = [];
+        let filteredProducts = [];
+        let currentFilter = 'all';
+        
+        // ===== INICIALIZAÇÃO =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Nova Loja Carregada - Sistema Limpo!');
             
-            const productsGrid = document.getElementById('productsGrid');
+            // Inicializa menu mobile
+            setupMobileMenu();
             
-            try {
-                // Carrega produtos do localStorage (mesmo sistema do admin)
-                let products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-                
-                // DEBUG: Mostra detalhes dos produtos carregados
-                console.log('🔍 DEBUG: Produtos carregados do localStorage:', products.length);
-                products.forEach((product, index) => {
-                    console.log(`📦 Produto ${index + 1}:`, {
-                        id: product.id,
-                        name: product.name,
-                        status: product.status,
-                        imagesCount: product.images?.length || 0,
-                        primarySrc: product.primarySrc ? 'Sim' : 'Não',
-                        hasImages: product.images && product.images.length > 0 ? 'Sim' : 'Não'
-                    });
-                    
-                    if (product.images && product.images.length > 0) {
-                        console.log(`🖼️ Imagens do produto "${product.name}":`, product.images.map(img => ({
-                            id: img.id,
-                            name: img.name,
-                            srcLength: img.src ? img.src.length : 0
-                        })));
-                    }
+            // Carrega produtos
+            loadProducts();
+        });
+        
+        // ===== MENU MOBILE =====
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
                 });
-                
-                // Se não houver produtos salvos, usar produtos padrão
-                if (products.length === 0) {
-                    console.log('📝 Usando produtos padrão...');
-                    products = getDefaultProducts();
-                    // Salva os produtos padrão para sincronizar
-                    localStorage.setItem('atelieProducts', JSON.stringify(products));
-                }
-                
-                // Filtra apenas produtos ativos
-                const activeProducts = products.filter(product => product.status === 'ativo');
-                
-                console.log(`📦 ${activeProducts.length} produtos ativos de ${products.length} total`);
-                
-                // Limpa grid
-                productsGrid.innerHTML = '';
-                
-                if (activeProducts.length === 0) {
-                    showEmptyState(productsGrid);
-                    return;
-                }
-                
-                // Renderiza produtos
-                activeProducts.forEach((product, index) => {
-                    console.log(`🎨 Renderizando produto ${index + 1}: "${product.name}"`);
-                    const imageUrl = getBestImageForProduct(product);
-                    console.log(`🖼️ Imagem para "${product.name}":`, imageUrl ? 'Encontrada' : 'Não encontrada');
-                    
-                    const productCard = createSimpleProductCard(product);
-                    productsGrid.appendChild(productCard);
-                });
-                
-                console.log('✅ Produtos renderizados com sucesso!');
-                
-            } catch (error) {
-                console.error('❌ Erro ao carregar produtos:', error);
-                showErrorState(productsGrid);
             }
         }
         
-        // Produtos padrão (mesmo do admin)
+        // ===== CARREGAMENTO DE PRODUTOS =====
+        async function loadProducts() {
+            console.log('📦 Carregando produtos do localStorage...');
+            
+            showLoadingState();
+            
+            try {
+                // Simula um pequeno delay para UX
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Carrega produtos do localStorage (mesmo sistema do admin)
+                const productsData = localStorage.getItem('atelieProducts');
+                
+                if (productsData) {
+                    allProducts = JSON.parse(productsData);
+                    console.log(`✅ ${allProducts.length} produtos carregados do localStorage`);
+                } else {
+                    console.log('📝 Usando produtos padrão...');
+                    allProducts = getDefaultProducts();
+                    // Salva produtos padrão
+                    localStorage.setItem('atelieProducts', JSON.stringify(allProducts));
+                }
+                
+                // Filtra apenas produtos ativos
+                const activeProducts = allProducts.filter(product => 
+                    product.status === 'ativo' || !product.status
+                );
+                
+                console.log(`🎯 ${activeProducts.length} produtos ativos encontrados`);
+                
+                if (activeProducts.length === 0) {
+                    showEmptyState();
+                    return;
+                }
+                
+                // Aplica filtro atual
+                applyFilter(currentFilter);
+                
+                console.log('✨ Produtos carregados com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar produtos:', error);
+                showErrorState();
+            }
+        }
+        
+        // ===== PRODUTOS PADRÃO =====
         function getDefaultProducts() {
             return [
                 {
-                    id: 'default-1',
+                    id: 'album-personalizado',
                     name: 'Álbum de Fotos Personalizado',
                     description: 'Álbum de fotos personalizado com capa decorada e páginas temáticas.',
                     price: 45.00,
-                    category: 'Álbuns',
+                    category: 'albuns',
                     status: 'ativo',
-                    images: [],
-                    shopeeLink: 'https://shopee.com.br/ateliedalele',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    shopeeLink: 'https://shopee.com.br/album-personalizado',
+                    images: []
                 },
                 {
-                    id: 'default-2',
+                    id: 'scrapbook-romantico',
                     name: 'Scrapbook Romântico',
                     description: 'Scrapbook temático para casais com decorações românticas.',
                     price: 65.00,
-                    category: 'Scrapbook',
+                    category: 'scrapbook',
                     status: 'ativo',
-                    images: [],
-                    shopeeLink: 'https://shopee.com.br/ateliedalele',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    shopeeLink: 'https://shopee.com.br/scrapbook-romantico',
+                    images: []
                 },
                 {
-                    id: 'default-3',
+                    id: 'convite-casamento',
                     name: 'Convite de Casamento',
                     description: 'Convite de casamento elegante com acabamento especial.',
                     price: 8.50,
-                    category: 'Convites',
+                    category: 'convites',
                     status: 'ativo',
-                    images: [],
-                    shopeeLink: 'https://shopee.com.br/ateliedalele',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    shopeeLink: 'https://shopee.com.br/convite-casamento',
+                    images: []
                 }
             ];
         }
         
-        // Cria card de produto simplificado
-        function createSimpleProductCard(product) {
-            const productDiv = document.createElement('div');
-            productDiv.className = 'bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1';
-            productDiv.setAttribute('data-product-id', product.id);
+        // ===== FILTROS =====
+        function filterProducts(category) {
+            currentFilter = category;
             
-            // Obtém a melhor imagem disponível
-            const imageUrl = getBestImageForProduct(product);
-            const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
-            const formattedPrice = new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(price);
+            // Atualiza botões de filtro
+            updateFilterButtons(category);
             
-            productDiv.innerHTML = `
-                <div class="relative overflow-hidden">
-                    ${imageUrl ? `
-                        <img src="${imageUrl}" 
-                             alt="${product.name}" 
-                             class="product-image w-full h-64 object-cover transition-transform duration-300 hover:scale-105"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="fallback-content hidden absolute inset-0 bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
-                            <div class="text-center">
-                                <i class="fas fa-image text-4xl text-rose-300 mb-2"></i>
-                                <p class="text-rose-500 text-sm">Imagem em breve</p>
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="fallback-content w-full h-64 bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
-                            <div class="text-center">
-                                <i class="fas fa-image text-4xl text-rose-300 mb-2"></i>
-                                <p class="text-rose-500 text-sm">Imagem em breve</p>
-                            </div>
-                        </div>
-                    `}
-                    
-                    <!-- Badge de categoria -->
-                    <div class="absolute top-3 left-3">
-                        <span class="bg-white/90 backdrop-blur-sm text-rose-600 px-3 py-1 rounded-full text-xs font-medium">
-                            ${product.category}
+            // Aplica filtro
+            applyFilter(category);
+        }
+        
+        function updateFilterButtons(activeCategory) {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            filterBtns.forEach(btn => {
+                btn.classList.remove('active', 'bg-pink-500', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700', 'border');
+            });
+            
+            const activeBtn = document.querySelector(`[onclick="filterProducts('${activeCategory}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-700', 'border');
+                activeBtn.classList.add('active', 'bg-pink-500', 'text-white');
+            }
+        }
+        
+        function applyFilter(category) {
+            const activeProducts = allProducts.filter(product => 
+                product.status === 'ativo' || !product.status
+            );
+            
+            if (category === 'all') {
+                filteredProducts = activeProducts;
+            } else {
+                filteredProducts = activeProducts.filter(product => 
+                    product.category === category
+                );
+            }
+            
+            renderProducts();
+        }
+        
+        // ===== RENDERIZAÇÃO =====
+        function renderProducts() {
+            const productsGrid = document.getElementById('productsGrid');
+            
+            if (filteredProducts.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            // Limpa grid
+            productsGrid.innerHTML = '';
+            
+            // Renderiza cada produto
+            filteredProducts.forEach(product => {
+                const productCard = createProductCard(product);
+                productsGrid.appendChild(productCard);
+            });
+            
+            showProductsGrid();
+        }
+        
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card bg-white rounded-2xl shadow-lg overflow-hidden';
+            
+            // Obtém melhor imagem
+            const imageUrl = getBestImage(product);
+            
+            card.innerHTML = `
+                <div class="relative">
+                    ${imageUrl ? 
+                        `<img src="${imageUrl}" alt="${product.name}" class="w-full h-64 object-cover">` :
+                        `<div class="w-full h-64 image-placeholder flex items-center justify-center">
+                            <i class="fas fa-image text-4xl text-gray-400"></i>
+                         </div>`
+                    }
+                    <div class="absolute top-4 right-4">
+                        <span class="bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                            ${formatCategory(product.category)}
                         </span>
                     </div>
                 </div>
                 
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-1">${product.name}</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">${product.name}</h3>
                     <p class="text-gray-600 mb-4 line-clamp-2">${product.description}</p>
                     
                     <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold text-rose-600">${formattedPrice}</span>
-                        ${product.shopeeLink ? `
-                            <a href="${product.shopeeLink}" 
-                               target="_blank" 
-                               rel="noopener noreferrer"
-                               class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-lg transition-colors duration-300 flex items-center gap-2">
-                                <i class="fab fa-shopify"></i>
-                                Ver na Shopee
-                            </a>
-                        ` : `
-                            <button class="bg-gray-400 text-white px-6 py-2 rounded-lg cursor-not-allowed">
-                                Em breve
-                            </button>
-                        `}
-                    </div>
-                </div>
-            `;
-            
-            return productDiv;
-        }
-        
-        // Obtém a melhor imagem disponível para o produto
-        function getBestImageForProduct(product) {
-            // Verifica se tem imagens no array
-            if (product.images && product.images.length > 0) {
-                return product.images[0].src;
-            }
-            
-            // Verifica se tem primarySrc
-            if (product.primarySrc) {
-                return product.primarySrc;
-            }
-            
-            return null;
-        }
-        
-        // Mostra estado vazio
-        function showEmptyState(container) {
-            container.innerHTML = `
-                <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
-                    <div class="bg-rose-100 rounded-full p-6 mb-6">
-                        <i class="fas fa-box-open text-4xl text-rose-400"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Nenhum produto disponível</h3>
-                    <p class="text-gray-500 mb-6 max-w-md">
-                        Nossos produtos estão sendo organizados. Volte em breve para ver nossas novidades!
-                    </p>
-                    <a href="contato.html" class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-lg transition-colors duration-300">
-                        Entre em Contato
-                    </a>
-                </div>
-            `;
-        }
-        
-        // Mostra estado de erro
-        function showErrorState(container) {
-            container.innerHTML = `
-                <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
-                    <div class="bg-red-100 rounded-full p-6 mb-6">
-                        <i class="fas fa-exclamation-triangle text-4xl text-red-400"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Erro ao carregar produtos</h3>
-                    <p class="text-gray-500 mb-6 max-w-md">
-                        Houve um problema ao carregar nossos produtos. Tente atualizar a página.
-                    </p>
-                    <button onclick="loadProducts()" class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-lg transition-colors duration-300">
-                        <i class="fas fa-redo mr-2"></i>
-                        Tentar Novamente
-                    </button>
-                </div>
-            `;
-        }
-        
-        // ==========================================
-        // FUNÇÕES DE DEBUG E SINCRONIZAÇÃO  
-        // ==========================================
-        
-        function debugProductsInStore() {
-            console.log('🔍 === DEBUG LOJA ===');
-            
-            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            console.log('Total produtos no localStorage:', products.length);
-            
-            if (products.length === 0) {
-                console.log('❌ Nenhum produto encontrado no localStorage!');
-                return;
-            }
-            
-            console.table(products.map(p => ({
-                id: p.id,
-                name: p.name,
-                status: p.status,
-                images: p.images?.length || 0,
-                primarySrc: p.primarySrc ? 'Sim' : 'Não'
-            })));
-            
-            // Testa função de obter imagem
-            products.forEach(product => {
-                const imageUrl = getBestImageForProduct(product);
-                console.log(`🖼️ "${product.name}": ${imageUrl ? 'TEM IMAGEM' : 'SEM IMAGEM'}`);
-                if (imageUrl) {
-                    console.log('   URL:', imageUrl.substring(0, 100) + '...');
-                }
-            });
-        }
-        
-        function forceReloadProducts() {
-            console.log('🔄 Forçando reload dos produtos...');
-            
-            // Recarrega produtos
-            loadProducts();
-            
-            console.log('✅ Reload forçado concluído!');
-        }
-        
-        function testImageSync() {
-            console.log('🧪 Testando sincronização de imagens...');
-            
-            const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            
-            let hasImageProblems = false;
-            
-            products.forEach(product => {
-                if (product.images && product.images.length > 0) {
-                    console.log(`✅ "${product.name}" tem ${product.images.length} imagem(ns)`);
-                    
-                    product.images.forEach((image, idx) => {
-                        if (!image.src || image.src.length < 100) {
-                            console.error(`❌ Imagem ${idx + 1} de "${product.name}" parece corrompida`);
-                            hasImageProblems = true;
-                        } else {
-                            console.log(`   ✅ Imagem ${idx + 1}: OK (${(image.src.length / 1024).toFixed(1)}KB)`);
-                        }
-                    });
-                } else {
-                    console.log(`⚠️ "${product.name}" não tem imagens`);
-                }
-            });
-            
-            if (hasImageProblems) {
-                console.warn('⚠️ Problemas de imagens detectados! Execute limpeza no admin.');
-            } else {
-                console.log('✅ Todas as imagens parecem OK!');
-            }
-        }
-        
-        // Exposição global para debug
-        window.debugProductsInStore = debugProductsInStore;
-        window.forceReloadProducts = forceReloadProducts;
-        window.testImageSync = testImageSync;
-        
-        // ==========================================
-        // PAINEL DE DEBUG TEMPORÁRIO
-        // ==========================================
-        
-        function createDebugPanel() {
-            // Remove painel existente se houver
-            const existingPanel = document.getElementById('debugPanel');
-            if (existingPanel) {
-                existingPanel.remove();
-                return;
-            }
-            
-            const debugPanel = document.createElement('div');
-            debugPanel.id = 'debugPanel';
-            debugPanel.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 15px;
-                border-radius: 10px;
-                z-index: 9999;
-                font-family: monospace;
-                font-size: 12px;
-                max-width: 300px;
-                border: 2px solid #f472b6;
-            `;
-            
-            debugPanel.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 10px; color: #f472b6;">
-                    🔧 DEBUG LOJA
-                </div>
-                <button onclick="debugProductsInStore()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #3b82f6; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                    🔍 Debug Produtos
-                </button>
-                <button onclick="forceReloadProducts()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #10b981; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                    🔄 Reload Produtos
-                </button>
-                <button onclick="testImageSync()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #f59e0b; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                    🧪 Test Imagens
-                </button>
-                <button onclick="document.getElementById('debugPanel').remove()" style="display: block; width: 100%; margin: 5px 0; padding: 5px; background: #ef4444; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                    ❌ Fechar
-                </button>
-                <div style="font-size: 10px; margin-top: 10px; color: #9ca3af;">
-                    Console (F12) para ver logs
-                </div>
-            `;
-            
-            document.body.appendChild(debugPanel);
-        }
-        
-        // Atalho para debug: Ctrl+D ou F2
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey && e.key === 'd') || e.key === 'F2') {
-                e.preventDefault();
-                createDebugPanel();
-            }
-        });
-        
-        // Exposição global
-        window.createDebugPanel = createDebugPanel;
-
-
-
-        // Função simplificada para criar cards de produtos
-        function createProductCard(product) {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            
-            // Add data-product-id for real-time updates
-            card.setAttribute('data-product-id', product.id || 'unknown');
-            
-            // Ensure all product fields have fallbacks
-            const safeProduct = {
-                id: product.id || 'unknown',
-                name: product.name || 'Produto',
-                description: product.description || 'Descrição do produto',
-                price: product.price || '0.00',
-                shopeeLink: product.shopeeLink || 'https://shopee.com.br/ateliedalelê',
-                icon: product.icon || 'fas fa-heart',
-                gradient: product.gradient || 'from-rose-light to-rose-medium'
-            };
-            
-            // Configuração de imagens com fallback (simplificada)
-            const imageConfig = getImageConfiguration(product);
-            
-            card.innerHTML = `
-                <div class="product-image-container">
-                    <!-- Loading indicator -->
-                    <div class="loading-indicator" id="loading-${safeProduct.name.replace(/\s+/g, '-').toLowerCase()}">
-                        <i class="fas fa-spinner fa-spin text-rose-medium text-2xl"></i>
-                    </div>
-                    
-                    <!-- Main image -->
-                    <img src="${imageConfig.primarySrc}" 
-                         alt="${safeProduct.name}" 
-                         class="product-image w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                         onload="handleImageLoad(this, '${safeProduct.name.replace(/\s+/g, '-').toLowerCase()}')"
-                         onerror="handleImageError(this, '${safeProduct.name.replace(/\s+/g, '-').toLowerCase()}', '${imageConfig.fallbackSrc}', '${safeProduct.name}', '${safeProduct.icon}', '${safeProduct.gradient}')">
-                    
-                    <!-- Fallback content (hidden by default) -->
-                    <div class="fallback-content" id="fallback-${safeProduct.name.replace(/\s+/g, '-').toLowerCase()}" style="display: none;">
-                        <i class="${safeProduct.icon}"></i>
-                        <p>${safeProduct.name}</p>
-                    </div>
-                </div>
-                
-                <div class="product-content">
-                    <h3 class="product-title">${safeProduct.name}</h3>
-                    <p class="product-description">${safeProduct.description}</p>
-                    
-                    <div class="product-footer">
-                        <div class="product-price">
-                            <span class="text-2xl font-cursive text-rose-medium">R$ ${parseFloat(safeProduct.price).toFixed(2).replace('.', ',')}</span>
+                        <div class="text-2xl font-bold text-pink-500">
+                            R$ ${product.price.toFixed(2).replace('.', ',')}
                         </div>
-                        <a href="${safeProduct.shopeeLink}" 
-                           target="_blank" 
-                           class="shopee-button">
-                            <i class="fas fa-shopping-bag mr-2"></i>
-                            Ver na Shopee
-                        </a>
+                        
+                        ${product.shopeeLink ? 
+                            `<a href="${product.shopeeLink}" target="_blank" class="btn-primary text-white px-6 py-2 rounded-lg font-medium inline-flex items-center">
+                                <i class="fas fa-shopping-bag mr-2"></i>
+                                Ver na Shopee
+                             </a>` :
+                            `<button class="bg-gray-300 text-gray-600 px-6 py-2 rounded-lg font-medium cursor-not-allowed">
+                                <i class="fas fa-clock mr-2"></i>
+                                Em Breve
+                             </button>`
+                        }
                     </div>
                 </div>
             `;
             
             return card;
         }
-
-        // Função simplificada para configurar imagens com fallback
-        function getImageConfiguration(product) {
-            // Lista de imagens de fallback em ordem de prioridade
-            const fallbackImages = [
-                'images/produtos/download.jpg',
-                'images/produtos/26f5.png',
-                'images/produtos/images.jpg',
-                'images/produtos/IMG_5262.JPG',
-                'images/produtos/IMG_8141.JPG'
-            ];
-            
-            let primarySrc = fallbackImages[0];
-            
-            // First, check if product has a primarySrc (from admin)
-            if (product.primarySrc) {
-                primarySrc = product.primarySrc;
-            } else if (product.images && product.images.length > 0) {
-                // Use first image from product
-                primarySrc = product.images[0].src;
-            } else {
-                // Use fallback based on product ID
-                primarySrc = getRealImagesForProduct(product.id);
-            }
-            
-            return {
-                primarySrc: primarySrc,
-                fallbackSrc: fallbackImages[1] || fallbackImages[0]
-            };
-        }
         
-        // Função simplificada para obter imagens baseadas no ID do produto
-        function getRealImagesForProduct(productId) {
-            const imageMap = {
-                'default-1': 'images/produtos/IMG_5262.JPG',
-                'default-2': 'images/produtos/26f5.png',
-                'default-3': 'images/produtos/eeb05b4e1bbfcfb2d9b2284f50c88aab.jpg',
-                'default-4': 'images/produtos/images.jpg'
-            };
-            
-            return imageMap[productId] || 'images/produtos/download.jpg';
-        }
-
-        // Função simplificada para lidar com carregamento da imagem
-        function handleImageLoad(imgElement, productId) {
-            const loadingIndicator = document.getElementById(`loading-${productId}`);
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        // Função simplificada para lidar com erro de carregamento da imagem
-        function handleImageError(imgElement, productId, fallbackSrc, productName, icon, gradient) {
-            const loadingIndicator = document.getElementById(`loading-${productId}`);
-            const fallbackContent = document.getElementById(`fallback-${productId}`);
-            
-            // Esconder loading indicator
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            
-            // Mostrar fallback content
-            if (fallbackContent) {
-                imgElement.style.display = 'none';
-                fallbackContent.style.display = 'flex';
-            }
-        }
-
-        // Load products when page loads (only once)
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Página carregada, carregando produtos...');
-            loadProducts();
-        });
-        
-        // Listen for storage changes (only excluded products to avoid loops)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'excludedProducts') {
-                console.log('Produtos excluídos atualizados, recarregando...');
-                loadProducts();
-            }
-        });
-        
-        // Listen for postMessage from admin dashboard (simplified)
-        window.addEventListener('message', function(e) {
-            if (e.data && e.data.type === 'UPDATE_PRODUCTS') {
-                console.log('Recebida atualização de produtos via postMessage');
-                updateProductCardsInRealTime(e.data.products);
-            } else if (e.data && e.data.type === 'PRODUCT_DELETED') {
-                console.log('Produto excluído, removendo da UI...');
-                const productCard = document.querySelector(`[data-product-id="${e.data.productId}"]`);
-                if (productCard) {
-                    productCard.remove();
-                    console.log(`Produto ${e.data.productId} removido da loja`);
+        // ===== UTILITÁRIOS =====
+        function getBestImage(product) {
+            // Verifica se tem imagens
+            if (product.images && product.images.length > 0) {
+                // Procura pela imagem primária
+                const primaryImage = product.images.find(img => img.primary);
+                if (primaryImage && primaryImage.src) {
+                    return primaryImage.src;
+                }
+                
+                // Se não tem primária, usa a primeira
+                if (product.images[0] && product.images[0].src) {
+                    return product.images[0].src;
                 }
             }
-        });
-        
-        // Function to update product cards in real-time without full reload
-        function updateProductCardsInRealTime(products) {
-            products.forEach(product => {
-                const productCard = document.querySelector(`[data-product-id="${product.id}"]`);
-                if (productCard) {
-                    // Update product data
-                    const titleElement = productCard.querySelector('.product-title');
-                    const descriptionElement = productCard.querySelector('.product-description');
-                    const priceElement = productCard.querySelector('.product-price');
-                    const imageElement = productCard.querySelector('.product-image');
-                    
-                    // Update text content with fallbacks
-                    if (titleElement) {
-                        titleElement.textContent = product.name || 'Produto';
-                    }
-                    if (descriptionElement) {
-                        descriptionElement.textContent = product.description || 'Descrição do produto';
-                    }
-                    if (priceElement) {
-                        const price = product.price || '0.00';
-                        priceElement.innerHTML = `<span class="text-2xl font-cursive text-rose-medium">R$ ${price}</span>`;
-                    }
-                    
-                    // Update image using primarySrc or best available image
-                    if (imageElement) {
-                        const bestImage = getBestImageForProduct(product);
-                        if (bestImage) {
-                            imageElement.src = bestImage;
-                            imageElement.style.display = 'block';
-                            
-                            // Hide fallback content
-                            const fallbackContent = productCard.querySelector('.fallback-content');
-                            if (fallbackContent) {
-                                fallbackContent.style.display = 'none';
-                            }
-                            
-                            // Hide loading indicator
-                            const loadingIndicator = productCard.querySelector('.loading-indicator');
-                            if (loadingIndicator) {
-                                loadingIndicator.style.display = 'none';
-                            }
-                        } else {
-                            // No valid image, show fallback
-                            showFallbackForProduct(productCard);
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Function to refresh store images without full page reload
-        function refreshStoreImages() {
-            console.log('Atualizando imagens da loja...');
             
-            // Get updated products from localStorage
-            const adminProducts = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
-            
-            // Update each product card with new image data
-            adminProducts.forEach(product => {
-                const productCard = document.querySelector(`[data-product-id="${product.id}"]`);
-                if (productCard) {
-                    const imageElement = productCard.querySelector('.product-image');
-                    if (imageElement) {
-                        const bestImage = getBestImageForProduct(product);
-                        if (bestImage) {
-                            imageElement.src = bestImage;
-                            imageElement.style.display = 'block';
-                            
-                            // Hide fallback content
-                            const fallbackContent = productCard.querySelector('.fallback-content');
-                            if (fallbackContent) {
-                                fallbackContent.style.display = 'none';
-                            }
-                            
-                            // Hide loading indicator
-                            const loadingIndicator = productCard.querySelector('.loading-indicator');
-                            if (loadingIndicator) {
-                                loadingIndicator.style.display = 'none';
-                            }
-                        } else {
-                            // No valid image, show fallback
-                            showFallbackForProduct(productCard);
-                        }
-                    }
-                }
-            });
-            
-            showRefreshNotification();
-        }
-        
-        // Function to show fallback for a product card
-        function showFallbackForProduct(productCard) {
-            const imageElement = productCard.querySelector('.product-image');
-            const fallbackContent = productCard.querySelector('.fallback-content');
-            const loadingIndicator = productCard.querySelector('.loading-indicator');
-            
-            if (imageElement) {
-                imageElement.style.display = 'none';
-            }
-            
-            if (fallbackContent) {
-                fallbackContent.style.display = 'flex';
-            }
-            
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-        
-        // Function to get the best available image for a product
-        function getBestImageForProduct(product) {
-            // First, check if product has a primarySrc
+            // Verifica primarySrc (sistema antigo)
             if (product.primarySrc) {
                 return product.primarySrc;
             }
             
-            // If no primarySrc, check images array
-            if (product.images && product.images.length > 0) {
-                // First, try to find a real image (not uploads/ URL)
-                const realImage = product.images.find(img => !img.src.startsWith('uploads/'));
-                if (realImage) {
-                    return realImage.src;
-                }
-                
-                // If no real image, use the first uploaded image
-                return product.images[0].src;
-            }
-            
-            // If no images, return null (will use fallback)
             return null;
         }
         
-        // Auto-refresh function to sync with admin changes (removed problematic auto-refresh)
-        function autoRefreshProducts() {
-            console.log('Executando refresh automático dos produtos...');
-            loadProducts();
-        }
-        
-        // Removed problematic auto-refresh that was causing products to reappear
-        // Now only manual refresh and event-based updates are used
-        
-        // Manual refresh function
-        function manualRefreshProducts() {
-            console.log('Refresh manual executado');
-            loadProducts();
-            showRefreshNotification();
-        }
-        
-        // Show refresh notification
-        function showRefreshNotification() {
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    <span>Produtos atualizados!</span>
-                </div>
-            `;
-            document.body.appendChild(notification);
+        function formatCategory(category) {
+            const categories = {
+                'albuns': 'Álbuns',
+                'scrapbook': 'Scrapbook',
+                'convites': 'Convites'
+            };
             
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            return categories[category] || 'Produto';
         }
         
-        // Add refresh button to page (optional)
-        function addRefreshButton() {
-            const header = document.querySelector('header');
-            if (header && !document.querySelector('.refresh-button')) {
-                const refreshButton = document.createElement('button');
-                refreshButton.className = 'refresh-button bg-rose-medium hover:bg-rose-dark text-white px-4 py-2 rounded-lg transition-colors duration-200 ml-4';
-                refreshButton.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Atualizar Imagens';
-                refreshButton.onclick = refreshStoreImages;
-                header.appendChild(refreshButton);
-            }
+        // ===== ESTADOS DA UI =====
+        function showLoadingState() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('productsGrid').classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('errorState').classList.add('hidden');
         }
         
-        // Initialize refresh button when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            addRefreshButton();
-        });
+        function showProductsGrid() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('productsGrid').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('errorState').classList.add('hidden');
+        }
+        
+        function showEmptyState() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('productsGrid').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('errorState').classList.add('hidden');
+        }
+        
+        function showErrorState() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('productsGrid').classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+        
+        // ===== DEBUG (Removível em produção) =====
+        window.debugStore = function() {
+            console.log('=== DEBUG NOVA LOJA ===');
+            console.log('Todos os produtos:', allProducts);
+            console.log('Produtos filtrados:', filteredProducts);
+            console.log('Filtro atual:', currentFilter);
+            
+            // Testa imagens
+            allProducts.forEach(product => {
+                const imageUrl = getBestImage(product);
+                console.log(`${product.name}: ${imageUrl ? 'TEM IMAGEM' : 'SEM IMAGEM'}`);
+            });
+        }
+        
+        // Exposição global para debug
+        window.loadProducts = loadProducts;
+        window.filterProducts = filterProducts;
+        
+        console.log('✨ Nova Loja Inicializada - Sistema Limpo e Moderno!');
     </script>
 </body>
 </html>
