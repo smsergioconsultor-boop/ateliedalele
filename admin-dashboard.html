@@ -335,6 +335,15 @@
             }, duration);
         }
 
+        // Funções auxiliares para compatibilidade
+        function showErrorMessage(message) {
+            showNotification(message, 'error', 5000);
+        }
+
+        function showSuccessMessage(message) {
+            showNotification(message, 'success', 3000);
+        }
+
         // ==========================================
         // GESTÃO DE DADOS
         // ==========================================
@@ -1401,20 +1410,20 @@
         
         // Configuração Cloudinary (conta gratuita - 25GB)
         const CLOUDINARY_CONFIG = {
-            cloudName: 'atelie-da-lele', // Será criado
-            uploadPreset: 'atelie_products', // Preset unsigned
-            maxFileSize: 10000000, // 10MB (vs 2MB localStorage)
+            cloudName: 'deltufm9', // ✅ Cloud Name configurado
+            uploadPreset: 'atelie_products', // ✅ Preset unsigned (sem API key)
             sources: ['local', 'camera'],
             multiple: false,
-            resourceType: 'image',
-            clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+            maxFileSize: 10000000, // 10MB (vs 2MB localStorage)
             maxImageWidth: 2000,
             maxImageHeight: 2000,
-            quality: 'auto:good',
-            format: 'auto',
             cropping: true,
+            folder: 'atelie_products', // ✅ Pasta específica
+            resourceType: 'auto',
+            theme: 'purple',
             showAdvancedOptions: false,
-            theme: 'purple'
+            // ✅ Remover configurações que podem causar conflito
+            defaultSource: 'local'
         };
         
         // Widget Cloudinary
