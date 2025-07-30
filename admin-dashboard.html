@@ -1419,24 +1419,20 @@
         // CLOUDINARY - STORAGE INFINITO
         // ==========================================
         
-        // ============= CLOUDINARY CONFIG v2.0 =============
-        // VERSÃO NOVA - Cache busted
+        // ============= CLOUDINARY CONFIG v2.1 - MINIMAL =============
+        // Configuração mínima para debug do erro 400
         const CLOUDINARY_CONFIG = {
             cloudName: 'deltufm9', // ✅ CORRETO: deltufm9
-            uploadPreset: 'atelie_products', // ✅ Preset unsigned (sem API key)
-            sources: ['local', 'camera'],
-            multiple: false,
-            maxFileSize: 10000000, // 10MB (vs 2MB localStorage)
-            maxImageWidth: 2000,
-            maxImageHeight: 2000,
-            cropping: true,
-            folder: 'atelie_products', // ✅ Pasta específica
-            resourceType: 'auto',
-            theme: 'purple',
-            showAdvancedOptions: false,
-            // ✅ Remover configurações que podem causar conflito
-            defaultSource: 'local'
+            uploadPreset: 'atelie_products' // ✅ Tente: 'test_upload' se der erro
         };
+        
+        // 🧪 CONFIGURAÇÃO DE BACKUP (descomente se precisar)
+        /*
+        const CLOUDINARY_CONFIG_BACKUP = {
+            cloudName: 'deltufm9',
+            uploadPreset: 'test_upload'
+        };
+        */
         
         // Widget Cloudinary
         let cloudinaryWidget = null;
