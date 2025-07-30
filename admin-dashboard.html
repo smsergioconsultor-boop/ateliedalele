@@ -1419,23 +1419,45 @@
         // CLOUDINARY - STORAGE INFINITO
         // ==========================================
         
-        // ============= CLOUDINARY API DIRETA v3.0 =============
-        // Muito mais simples que o widget!
+        // ============= CLOUDINARY API DIRETA v3.1 =============
+        // Configuração flexível: Unsigned OU Signed
         const CLOUDINARY_CONFIG = {
             cloudName: 'deltufm9',
             apiUrl: 'https://api.cloudinary.com/v1_1/deltufm9/image/upload',
-            uploadPreset: 'ml_default' // Preset padrão que sempre existe
+            
+            // OPÇÃO 1: Upload Unsigned (sem API Key)
+            uploadPreset: 'atelie_products', // Preset que você criou
+            useApiKey: false,
+            
+            // OPÇÃO 2: Upload Signed (com API Key) - descomente se precisar
+            /*
+            apiKey: '658446174166183', // Sua API Key
+            apiSecret: 'SUA_API_SECRET_AQUI', // ⚠️ NUNCA exponha em produção!
+            useApiKey: true,
+            */
         };
         
-        // Upload direto via API - SEM WIDGET COMPLICADO!
+        // ============= UPLOAD API v3.1 - FLEXÍVEL =============
         async function uploadToCloudinary(file) {
             try {
                 console.log('🚀 UPLOAD DIRETO - Enviando via API:', file.name);
+                console.log('🔧 Usando preset:', CLOUDINARY_CONFIG.uploadPreset);
+                console.log('🔧 Modo:', CLOUDINARY_CONFIG.useApiKey ? 'Signed' : 'Unsigned');
                 
                 const formData = new FormData();
                 formData.append('file', file);
-                formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
                 formData.append('folder', 'atelie_products');
+                
+                if (CLOUDINARY_CONFIG.useApiKey) {
+                    // MODO SIGNED (com API Key)
+                    formData.append('api_key', CLOUDINARY_CONFIG.apiKey);
+                    // Assinatura seria necessária aqui (requer backend)
+                    console.log('⚠️ MODO SIGNED - Requer assinatura (não implementado)');
+                    throw new Error('Modo Signed requer backend para assinatura');
+                } else {
+                    // MODO UNSIGNED (sem API Key)
+                    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+                }
                 
                 const response = await fetch(CLOUDINARY_CONFIG.apiUrl, {
                     method: 'POST',
@@ -1443,6 +1465,8 @@
                 });
                 
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ RESPOSTA ERRO:', response.status, errorText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
@@ -1467,11 +1491,21 @@
             }
         }
         
-        // Inicialização simplificada
+        // ============= INICIALIZAÇÃO v3.1 =============
         function initCloudinary() {
-            console.log('✅ CLOUDINARY API DIRETA v3.0 - Pronto para uso!');
+            console.log('✅ CLOUDINARY API DIRETA v3.1 - Pronto para uso!');
             console.log('🔧 Cloud Name:', CLOUDINARY_CONFIG.cloudName);
             console.log('🌐 API URL:', CLOUDINARY_CONFIG.apiUrl);
+            
+            if (CLOUDINARY_CONFIG.useApiKey) {
+                console.log('🔐 MODO: Signed (com API Key)');
+                console.log('🔑 API Key:', CLOUDINARY_CONFIG.apiKey);
+            } else {
+                console.log('🔓 MODO: Unsigned (sem API Key)');
+                console.log('📋 Upload Preset:', CLOUDINARY_CONFIG.uploadPreset);
+                console.log('⚠️ CERTIFIQUE-SE que o preset está configurado como "Unsigned"!');
+            }
+            
             return true;
         }
         
@@ -1639,7 +1673,7 @@
             // Resto da inicialização...
             updateStats();
             loadProducts();
-            console.log('✨ Admin Panel v3.0 - API Direta inicializado!');
+            console.log('✨ Admin Panel v3.1 - API Direta inicializado!');
         }
         
         document.addEventListener('DOMContentLoaded', initApp);
