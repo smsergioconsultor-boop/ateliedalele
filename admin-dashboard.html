@@ -11,8 +11,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ===== CLOUDINARY WIDGET v2.0 ===== -->
-    <script src="https://upload-widget.cloudinary.com/global/all.js?v=2.0" type="text/javascript"></script>
+    <!-- ===== CLOUDINARY API DIRETA v3.0 ===== -->
+    <!-- Widget removido - usando fetch() direto! -->
     
     <!-- Custom CSS -->
     <style>
@@ -1419,106 +1419,168 @@
         // CLOUDINARY - STORAGE INFINITO
         // ==========================================
         
-        // ============= CLOUDINARY CONFIG v2.1 - MINIMAL =============
-        // Configuração mínima para debug do erro 400
+        // ============= CLOUDINARY API DIRETA v3.0 =============
+        // Muito mais simples que o widget!
         const CLOUDINARY_CONFIG = {
-            cloudName: 'deltufm9', // ✅ CORRETO: deltufm9
-            uploadPreset: 'test_upload' // ✅ Usando preset existente
-        };
-        
-        // 🧪 CONFIGURAÇÃO DE BACKUP (descomente se precisar)
-        /*
-        const CLOUDINARY_CONFIG_BACKUP = {
             cloudName: 'deltufm9',
-            uploadPreset: 'test_upload'
+            apiUrl: 'https://api.cloudinary.com/v1_1/deltufm9/image/upload',
+            uploadPreset: 'ml_default' // Preset padrão que sempre existe
         };
-        */
         
-        // Widget Cloudinary
-        let cloudinaryWidget = null;
-        
-        function initCloudinary() {
+        // Upload direto via API - SEM WIDGET COMPLICADO!
+        async function uploadToCloudinary(file) {
             try {
-                console.log('🚀 VERSÃO 2.0 - Inicializando Cloudinary com:', CLOUDINARY_CONFIG.cloudName);
-                cloudinaryWidget = cloudinary.createUploadWidget(CLOUDINARY_CONFIG, 
-                    (error, result) => handleCloudinaryUpload(error, result)
-                );
-                console.log('✅ Cloudinary v2.0 inicializado - Storage infinito disponível!');
-                console.log('🔧 Cloud Name confirmado:', CLOUDINARY_CONFIG.cloudName);
-                return true;
+                console.log('🚀 UPLOAD DIRETO - Enviando via API:', file.name);
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+                formData.append('folder', 'atelie_products');
+                
+                const response = await fetch(CLOUDINARY_CONFIG.apiUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ UPLOAD SUCESSO - URL:', result.secure_url);
+                
+                return {
+                    success: true,
+                    url: result.secure_url,
+                    publicId: result.public_id,
+                    originalName: file.name,
+                    size: result.bytes,
+                    format: result.format
+                };
+                
             } catch (error) {
-                console.warn('⚠️ Cloudinary indisponível, usando localStorage como fallback');
-                console.error('Erro completo:', error);
-                return false;
+                console.error('❌ ERRO UPLOAD API:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
             }
         }
         
-        function handleCloudinaryUpload(error, result) {
-            if (error) {
-                console.error('❌ Erro no upload Cloudinary:', error);
-                showErrorMessage('Erro no upload da imagem');
-                return;
-            }
-            
-            if (result && result.event === 'success') {
-                const imageData = {
-                    id: 'cloud_' + Date.now(),
-                    name: result.info.original_filename,
-                    src: result.info.secure_url, // URL otimizada Cloudinary
-                    cloudinary: true,
-                    size: result.info.bytes,
-                    format: result.info.format,
-                    width: result.info.width,
-                    height: result.info.height,
-                    created: new Date().toISOString()
-                };
+        // Inicialização simplificada
+        function initCloudinary() {
+            console.log('✅ CLOUDINARY API DIRETA v3.0 - Pronto para uso!');
+            console.log('🔧 Cloud Name:', CLOUDINARY_CONFIG.cloudName);
+            console.log('🌐 API URL:', CLOUDINARY_CONFIG.apiUrl);
+            return true;
+        }
+        
+        // ============= HANDLER API DIRETA v3.0 =============
+        async function handleCloudinaryApiUpload(file, productId) {
+            try {
+                console.log('🚀 PROCESSANDO UPLOAD API:', file.name);
+                showSuccessMessage('📤 Enviando imagem para nuvem...');
                 
-                // Adiciona ao produto atual
-                if (window.currentEditingProductId) {
-                    addImageToProduct(window.currentEditingProductId, imageData);
-                    showSuccessMessage(`Imagem "${imageData.name}" adicionada com sucesso!`);
+                const result = await uploadToCloudinary(file);
+                
+                if (result.success) {
+                    const imageData = {
+                        id: 'cloud_' + Date.now(),
+                        name: result.originalName,
+                        src: result.url, // URL direta do Cloudinary
+                        cloudinary: true,
+                        size: result.size,
+                        format: result.format,
+                        publicId: result.publicId,
+                        created: new Date().toISOString()
+                    };
+                    
+                    // Adiciona ao produto
+                    addImageToProduct(productId, imageData);
+                    showSuccessMessage(`✅ Imagem "${imageData.name}" carregada na nuvem!`);
                     
                     // Atualiza modal se estiver aberto
                     const modal = document.getElementById('imageModal');
                     if (modal && !modal.classList.contains('hidden')) {
-                        addImageToGallery(imageData, window.currentEditingProductId);
+                        addImageToGallery(imageData, productId);
                     }
+                    
+                    return true;
+                } else {
+                    throw new Error(result.error);
                 }
+                
+            } catch (error) {
+                console.error('❌ ERRO API UPLOAD:', error);
+                showErrorMessage(`Erro no upload: ${error.message}`);
+                return false;
             }
         }
         
-        // Sistema híbrido de upload
+        // ============= SISTEMA API DIRETA v3.0 =============
         function openImageUpload(productId) {
             window.currentEditingProductId = productId;
             
-            // Tenta Cloudinary primeiro
-            if (cloudinaryWidget) {
-                cloudinaryWidget.open();
-                return;
-            }
-            
-            // Fallback para localStorage
+            // Cria input de arquivo para API direta
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
             input.multiple = false;
             
-            input.onchange = function(e) {
-                const files = Array.from(e.target.files);
-                if (files.length > 0) {
-                    handleImageUpload(files, productId);
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validação básica
+                    if (file.size > 10 * 1024 * 1024) { // 10MB
+                        showErrorMessage('Arquivo muito grande! Máximo 10MB');
+                        return;
+                    }
+                    
+                    if (!file.type.startsWith('image/')) {
+                        showErrorMessage('Selecione apenas arquivos de imagem!');
+                        return;
+                    }
+                    
+                    // Upload direto via API
+                    await handleCloudinaryApiUpload(file, productId);
                 }
             };
             
+            // Abre seletor de arquivo
             input.click();
+        }
+        
+        // ============= SISTEMA DE FALLBACK v3.0 =============
+        // Fallback automático para localStorage se API falhar
+        async function uploadWithFallback(file, productId) {
+            // Tenta API primeiro
+            const success = await handleCloudinaryApiUpload(file, productId);
+            
+            if (!success) {
+                console.log('🔄 API falhou, usando localStorage...');
+                // Converte para base64 como fallback
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        id: 'local_' + Date.now(),
+                        name: file.name,
+                        src: e.target.result,
+                        cloudinary: false,
+                        size: file.size,
+                        created: new Date().toISOString()
+                    };
+                    
+                    addImageToProduct(productId, imageData);
+                    showSuccessMessage(`📁 Imagem "${file.name}" salva localmente`);
+                };
+                reader.readAsDataURL(file);
+            }
         }
         
         // Função para migrar imagens localStorage → Cloudinary
         function migrateToCloudinary() {
-            if (!cloudinaryWidget) {
-                showErrorMessage('Cloudinary não está disponível');
-                return;
-            }
+            console.log('🚀 Migração não necessária - usando API direta!');
+            showSuccessMessage('Sistema já está otimizado com API direta!');
             
             const products = JSON.parse(localStorage.getItem('atelieProducts') || '[]');
             let imagesToMigrate = 0;
@@ -1577,7 +1639,7 @@
             // Resto da inicialização...
             updateStats();
             loadProducts();
-            console.log('✨ Admin Panel inicializado com storage infinito!');
+            console.log('✨ Admin Panel v3.0 - API Direta inicializado!');
         }
         
         document.addEventListener('DOMContentLoaded', initApp);
