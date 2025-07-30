@@ -268,7 +268,7 @@
         // ==========================================
         // ADMIN DASHBOARD v2.0 - CACHE BUSTED  
         // ==========================================
-        console.log('🔄 ADMIN DASHBOARD v2.0 CARREGANDO - Cache foi quebrado!');
+        console.log('🔄 ADMIN DASHBOARD v3.2 CARREGANDO - Sistema Auto-Retry!');
         
         const CONFIG = {
             STORAGE_KEY: 'atelieProducts',
@@ -893,10 +893,15 @@
             // Setup drag and drop
             setupImageDragDrop(product.id);
             
-            // Setup file input
-            document.getElementById('imageUpload').addEventListener('change', function(e) {
-                handleImageUpload(e.target.files, product.id);
-            });
+            // Setup file input - com verificação de segurança
+            const imageUploadElement = document.getElementById('imageUpload');
+            if (imageUploadElement) {
+                imageUploadElement.addEventListener('change', function(e) {
+                    handleImageUpload(e.target.files, product.id);
+                });
+            } else {
+                console.warn('⚠️ Elemento imageUpload não encontrado no DOM');
+            }
         }
         
         function renderImageGallery(images) {
@@ -1419,45 +1424,34 @@
         // CLOUDINARY - STORAGE INFINITO
         // ==========================================
         
-        // ============= CLOUDINARY API DIRETA v3.1 =============
-        // Configuração flexível: Unsigned OU Signed
+        // ============= CLOUDINARY API v3.2 - AUTO DETECÇÃO =============
         const CLOUDINARY_CONFIG = {
             cloudName: 'deltufm9',
             apiUrl: 'https://api.cloudinary.com/v1_1/deltufm9/image/upload',
             
-            // OPÇÃO 1: Upload Unsigned (sem API Key)
-            uploadPreset: 'atelie_products', // Preset que você criou
-            useApiKey: false,
-            
-            // OPÇÃO 2: Upload Signed (com API Key) - descomente se precisar
-            /*
-            apiKey: '658446174166183', // Sua API Key
-            apiSecret: 'SUA_API_SECRET_AQUI', // ⚠️ NUNCA exponha em produção!
-            useApiKey: true,
-            */
+            // Lista de presets para tentar (em ordem de prioridade)
+            presetsToTry: [
+                'atelie_products',  // Preset customizado
+                'ml_default',       // Preset padrão Cloudinary
+                'upload_preset'     // Outro preset comum
+            ],
+            currentPresetIndex: 0,
+            useApiKey: false
         };
         
-        // ============= UPLOAD API v3.1 - FLEXÍVEL =============
-        async function uploadToCloudinary(file) {
+        // ============= UPLOAD API v3.2 - AUTO RETRY =============
+        async function uploadToCloudinary(file, retryCount = 0) {
+            const maxRetries = CLOUDINARY_CONFIG.presetsToTry.length;
+            const currentPreset = CLOUDINARY_CONFIG.presetsToTry[retryCount];
+            
             try {
-                console.log('🚀 UPLOAD DIRETO - Enviando via API:', file.name);
-                console.log('🔧 Usando preset:', CLOUDINARY_CONFIG.uploadPreset);
-                console.log('🔧 Modo:', CLOUDINARY_CONFIG.useApiKey ? 'Signed' : 'Unsigned');
+                console.log(`🚀 TENTATIVA ${retryCount + 1}/${maxRetries} - Enviando via API:`, file.name);
+                console.log('🔧 Usando preset:', currentPreset);
                 
                 const formData = new FormData();
                 formData.append('file', file);
+                formData.append('upload_preset', currentPreset);
                 formData.append('folder', 'atelie_products');
-                
-                if (CLOUDINARY_CONFIG.useApiKey) {
-                    // MODO SIGNED (com API Key)
-                    formData.append('api_key', CLOUDINARY_CONFIG.apiKey);
-                    // Assinatura seria necessária aqui (requer backend)
-                    console.log('⚠️ MODO SIGNED - Requer assinatura (não implementado)');
-                    throw new Error('Modo Signed requer backend para assinatura');
-                } else {
-                    // MODO UNSIGNED (sem API Key)
-                    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
-                }
                 
                 const response = await fetch(CLOUDINARY_CONFIG.apiUrl, {
                     method: 'POST',
@@ -1466,12 +1460,25 @@
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('❌ RESPOSTA ERRO:', response.status, errorText);
+                    console.error(`❌ PRESET "${currentPreset}" FALHOU:`, response.status, errorText);
+                    
+                    // Se for erro 401 e ainda há presets para tentar
+                    if (response.status === 401 && retryCount < maxRetries - 1) {
+                        console.log(`🔄 TENTANDO PRÓXIMO PRESET...`);
+                        return await uploadToCloudinary(file, retryCount + 1);
+                    }
+                    
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const result = await response.json();
-                console.log('✅ UPLOAD SUCESSO - URL:', result.secure_url);
+                console.log(`✅ SUCESSO COM PRESET "${currentPreset}":`, result.secure_url);
+                
+                // Salva o preset que funcionou para futuras tentativas
+                if (retryCount > 0) {
+                    CLOUDINARY_CONFIG.presetsToTry[0] = currentPreset;
+                    console.log(`💾 PRESET "${currentPreset}" salvo como padrão`);
+                }
                 
                 return {
                     success: true,
@@ -1479,32 +1486,35 @@
                     publicId: result.public_id,
                     originalName: file.name,
                     size: result.bytes,
-                    format: result.format
+                    format: result.format,
+                    presetUsed: currentPreset
                 };
                 
             } catch (error) {
-                console.error('❌ ERRO UPLOAD API:', error);
+                console.error(`❌ ERRO PRESET "${currentPreset}":`, error.message);
+                
+                // Se ainda há presets para tentar
+                if (retryCount < maxRetries - 1) {
+                    console.log(`🔄 TENTANDO PRÓXIMO PRESET...`);
+                    return await uploadToCloudinary(file, retryCount + 1);
+                }
+                
+                // Todos os presets falharam
+                console.error('❌ TODOS OS PRESETS FALHARAM');
                 return {
                     success: false,
-                    error: error.message
+                    error: `Falha em todos os presets: ${error.message}`
                 };
             }
         }
         
-        // ============= INICIALIZAÇÃO v3.1 =============
+        // ============= INICIALIZAÇÃO v3.2 =============
         function initCloudinary() {
-            console.log('✅ CLOUDINARY API DIRETA v3.1 - Pronto para uso!');
+            console.log('✅ CLOUDINARY API DIRETA v3.2 - Pronto para uso!');
             console.log('🔧 Cloud Name:', CLOUDINARY_CONFIG.cloudName);
             console.log('🌐 API URL:', CLOUDINARY_CONFIG.apiUrl);
-            
-            if (CLOUDINARY_CONFIG.useApiKey) {
-                console.log('🔐 MODO: Signed (com API Key)');
-                console.log('🔑 API Key:', CLOUDINARY_CONFIG.apiKey);
-            } else {
-                console.log('🔓 MODO: Unsigned (sem API Key)');
-                console.log('📋 Upload Preset:', CLOUDINARY_CONFIG.uploadPreset);
-                console.log('⚠️ CERTIFIQUE-SE que o preset está configurado como "Unsigned"!');
-            }
+            console.log('🔧 Presets a tentar:', CLOUDINARY_CONFIG.presetsToTry);
+            console.log('🚀 Sistema de auto-detecção ativado!');
             
             return true;
         }
@@ -1575,8 +1585,8 @@
                         return;
                     }
                     
-                    // Upload direto via API
-                    await handleCloudinaryApiUpload(file, productId);
+                    // Upload com fallback automático
+                    await uploadWithFallback(file, productId);
                 }
             };
             
@@ -1584,14 +1594,16 @@
             input.click();
         }
         
-        // ============= SISTEMA DE FALLBACK v3.0 =============
-        // Fallback automático para localStorage se API falhar
+        // ============= SISTEMA DE FALLBACK v3.2 =============
+        // Fallback automático para localStorage se todos os presets falharem
         async function uploadWithFallback(file, productId) {
-            // Tenta API primeiro
-            const success = await handleCloudinaryApiUpload(file, productId);
+            // Tenta API primeiro com auto-retry
+            const result = await handleCloudinaryApiUpload(file, productId);
             
-            if (!success) {
-                console.log('🔄 API falhou, usando localStorage...');
+            if (!result) {
+                console.log('🔄 CLOUDINARY FALHOU - Usando localStorage como fallback...');
+                showSuccessMessage('⚠️ Salvando localmente como backup...');
+                
                 // Converte para base64 como fallback
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1605,10 +1617,19 @@
                     };
                     
                     addImageToProduct(productId, imageData);
-                    showSuccessMessage(`📁 Imagem "${file.name}" salva localmente`);
+                    showSuccessMessage(`📁 Imagem "${file.name}" salva localmente (backup)`);
+                    
+                    // Atualiza modal se estiver aberto
+                    const modal = document.getElementById('imageModal');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        addImageToGallery(imageData, productId);
+                    }
                 };
                 reader.readAsDataURL(file);
+                return true;
             }
+            
+            return result;
         }
         
         // Função para migrar imagens localStorage → Cloudinary
@@ -1641,8 +1662,8 @@
         
         // Atualiza interface para mostrar tipo de storage
         function updateImageInterface() {
-            const hasCloudinary = !!cloudinaryWidget;
-            const storageType = hasCloudinary ? '🌩️ Cloudinary (∞)' : '💾 LocalStorage (5MB)';
+            // Sempre usa Cloudinary API direta agora
+            const storageType = '🌩️ Cloudinary API (∞)';
             
             // Atualiza título do storage
             const storageElement = document.getElementById('storageUsage');
@@ -1654,10 +1675,10 @@
             }
         }
         
-        // Exposição global
+        // ============= EXPOSIÇÃO GLOBAL v3.2 =============
         window.openImageUpload = openImageUpload;
         window.migrateToCloudinary = migrateToCloudinary;
-        window.cloudinaryWidget = cloudinaryWidget;
+        window.uploadToCloudinary = uploadToCloudinary; // Nova função API direta
         
         // ==========================================
         // INICIALIZAÇÃO DA APLICAÇÃO
@@ -1673,7 +1694,7 @@
             // Resto da inicialização...
             updateStats();
             loadProducts();
-            console.log('✨ Admin Panel v3.1 - API Direta inicializado!');
+            console.log('✨ Admin Panel v3.2 - API Direta inicializado!');
         }
         
         document.addEventListener('DOMContentLoaded', initApp);
