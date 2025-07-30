@@ -1519,6 +1519,60 @@
             return true;
         }
         
+                        // ============= FUNÇÃO AUXILIAR PARA MODAL v3.2 =============
+        function addImageToGallery(imageData, productId) {
+            const gallery = document.getElementById('imageGallery');
+            if (!gallery) {
+                console.warn('⚠️ Gallery não encontrada - modal pode estar fechado');
+                return;
+            }
+            
+            // Verifica se é o estado vazio
+            const emptyState = gallery.querySelector('.col-span-full');
+            if (emptyState) {
+                gallery.innerHTML = ''; // Remove estado vazio
+            }
+            
+            // Cria elemento da nova imagem
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'group relative bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200';
+            imageDiv.innerHTML = `
+                <div class="aspect-square overflow-hidden rounded-t-lg bg-gray-100">
+                    <img src="${imageData.src}" 
+                         alt="${imageData.name}"
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                </div>
+                <div class="p-3">
+                    <p class="text-xs font-medium text-gray-900 truncate mb-1">${imageData.name}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500">
+                            ${imageData.cloudinary ? '☁️ Nuvem' : '💾 Local'}
+                        </span>
+                        <div class="flex gap-1">
+                            <button class="p-1 text-green-600 hover:bg-green-50 rounded transition-colors" title="Download">
+                                <i class="fas fa-download text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Adiciona ao início da galeria
+            gallery.insertBefore(imageDiv, gallery.firstChild);
+            
+            // Atualiza contador no modal
+            const counterElement = gallery.parentElement.querySelector('h4');
+            if (counterElement) {
+                const currentImages = gallery.children.length;
+                counterElement.innerHTML = `
+                    <i class="fas fa-folder-open mr-2"></i>
+                    Imagens Atuais (${currentImages})
+                `;
+            }
+            
+            console.log(`✅ Imagem "${imageData.name}" adicionada à galeria do modal`);
+        }
+        
         // ============= HANDLER API DIRETA v3.0 =============
         async function handleCloudinaryApiUpload(file, productId) {
             try {
