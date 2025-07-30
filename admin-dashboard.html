@@ -11,8 +11,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ===== CLOUDINARY WIDGET ===== -->
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <!-- ===== CLOUDINARY WIDGET v2.0 ===== -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js?v=2.0" type="text/javascript"></script>
     
     <!-- Custom CSS -->
     <style>
@@ -266,8 +266,9 @@
     <!-- JavaScript -->
     <script>
         // ==========================================
-        // CONFIGURAÇÕES E CONSTANTES
+        // ADMIN DASHBOARD v2.0 - CACHE BUSTED  
         // ==========================================
+        console.log('🔄 ADMIN DASHBOARD v2.0 CARREGANDO - Cache foi quebrado!');
         
         const CONFIG = {
             STORAGE_KEY: 'atelieProducts',
@@ -335,13 +336,23 @@
             }, duration);
         }
 
-        // Funções auxiliares para compatibilidade
-        function showErrorMessage(message) {
+        // ============= FUNÇÕES AUXILIARES v2.0 =============
+        // Cache busted - novas funções
+        window.showErrorMessage = function(message) {
             showNotification(message, 'error', 5000);
+        };
+
+        window.showSuccessMessage = function(message) {
+            showNotification(message, 'success', 3000);
+        };
+
+        // Compatibilidade local
+        function showErrorMessage(message) {
+            window.showErrorMessage(message);
         }
 
         function showSuccessMessage(message) {
-            showNotification(message, 'success', 3000);
+            window.showSuccessMessage(message);
         }
 
         // ==========================================
@@ -1408,9 +1419,10 @@
         // CLOUDINARY - STORAGE INFINITO
         // ==========================================
         
-        // Configuração Cloudinary (conta gratuita - 25GB)
+        // ============= CLOUDINARY CONFIG v2.0 =============
+        // VERSÃO NOVA - Cache busted
         const CLOUDINARY_CONFIG = {
-            cloudName: 'deltufm9', // ✅ Cloud Name configurado
+            cloudName: 'deltufm9', // ✅ CORRETO: deltufm9
             uploadPreset: 'atelie_products', // ✅ Preset unsigned (sem API key)
             sources: ['local', 'camera'],
             multiple: false,
@@ -1431,13 +1443,16 @@
         
         function initCloudinary() {
             try {
+                console.log('🚀 VERSÃO 2.0 - Inicializando Cloudinary com:', CLOUDINARY_CONFIG.cloudName);
                 cloudinaryWidget = cloudinary.createUploadWidget(CLOUDINARY_CONFIG, 
                     (error, result) => handleCloudinaryUpload(error, result)
                 );
-                console.log('✅ Cloudinary inicializado - Storage infinito disponível!');
+                console.log('✅ Cloudinary v2.0 inicializado - Storage infinito disponível!');
+                console.log('🔧 Cloud Name confirmado:', CLOUDINARY_CONFIG.cloudName);
                 return true;
             } catch (error) {
                 console.warn('⚠️ Cloudinary indisponível, usando localStorage como fallback');
+                console.error('Erro completo:', error);
                 return false;
             }
         }
