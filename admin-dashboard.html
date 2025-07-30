@@ -372,19 +372,36 @@
         }
         
         function saveProducts(products = APP_STATE.products) {
+            console.log('💾 saveProducts chamada com', products.length, 'produtos');
+            
             try {
                 const data = JSON.stringify(products);
+                console.log('📏 Tamanho dos dados:', (data.length / 1024).toFixed(2), 'KB');
                 
                 // Verifica tamanho antes de salvar
                 if (data.length > CONFIG.MAX_STORAGE_SIZE * 0.8) {
+                    console.warn('⚠️ Storage próximo do limite');
                     showNotification('Atenção: Storage próximo do limite. Considere otimizar.', 'warning');
                 }
                 
                 localStorage.setItem(CONFIG.STORAGE_KEY, data);
                 APP_STATE.products = products;
                 updateStats();
+                
+                console.log('✅ Produtos salvos no localStorage');
+                
+                // Debug: verificar se foi realmente salvo
+                const verification = localStorage.getItem(CONFIG.STORAGE_KEY);
+                if (verification) {
+                    const parsedProducts = JSON.parse(verification);
+                    console.log('🔍 Verificação: produtos salvos =', parsedProducts.length);
+                } else {
+                    console.error('❌ Verificação falhou: dados não encontrados no localStorage');
+                }
+                
                 return true;
             } catch (error) {
+                console.error('❌ Erro ao salvar produtos:', error);
                 if (error.name === 'QuotaExceededError') {
                     showNotification('Storage cheio! Optimize os dados.', 'error');
                     return false;
@@ -1053,28 +1070,47 @@
         }
         
         function addImageToProduct(productId, imageData) {
+            console.log('💾 addImageToProduct chamada:', { productId, imageName: imageData.name });
+            
             const products = [...APP_STATE.products];
             const product = products.find(p => p.id === productId);
             
-            if (!product) return;
+            if (!product) {
+                console.error('❌ Produto não encontrado:', productId);
+                return false;
+            }
+            
+            console.log('✅ Produto encontrado:', product.name);
             
             if (!product.images) {
                 product.images = [];
+                console.log('📝 Array de imagens criado para o produto');
             }
+            
+            // Debug antes de adicionar
+            console.log('📊 Estado antes:', {
+                imagesLength: product.images.length,
+                hasPrimarySrc: !!product.primarySrc
+            });
             
             // Adicionar imagem
             product.images.push(imageData);
+            console.log('✅ Imagem adicionada ao array. Total:', product.images.length);
             
             // Se é a primeira imagem, atualizar primarySrc
             if (product.images.length === 1) {
                 // Usar uma versão reduzida para primarySrc (para economizar espaço)
                 product.primarySrc = imageData.src;
+                console.log('🎯 primarySrc atualizado (primeira imagem)');
             }
             
             product.updatedAt = new Date().toISOString();
             
             // Salvar (com verificação de quota)
-            saveProducts(products);
+            const saved = saveProducts(products);
+            console.log('💾 Salvamento resultado:', saved);
+            
+            return saved;
         }
         
         function moveImageToFirst(imageId) {
@@ -1519,28 +1555,46 @@
             return true;
         }
         
-                        // ============= FUNÇÃO AUXILIAR PARA MODAL v3.2 =============
+                        // ============= FUNÇÃO AUXILIAR PARA MODAL v3.2 DEBUG =============
         function addImageToGallery(imageData, productId) {
+            console.log('🎨 addImageToGallery chamada com:', {
+                imageName: imageData.name,
+                productId: productId,
+                imageDataKeys: Object.keys(imageData)
+            });
+            
             const gallery = document.getElementById('imageGallery');
+            console.log('🔍 Gallery elemento:', !!gallery);
+            
             if (!gallery) {
-                console.warn('⚠️ Gallery não encontrada - modal pode estar fechado');
+                console.error('❌ Gallery não encontrada - ID imageGallery não existe no DOM');
                 return;
             }
+            
+            // Debug do estado atual da gallery
+            console.log('📊 Estado atual da gallery:', {
+                children: gallery.children.length,
+                innerHTML: gallery.innerHTML.substring(0, 100) + '...'
+            });
             
             // Verifica se é o estado vazio
             const emptyState = gallery.querySelector('.col-span-full');
             if (emptyState) {
+                console.log('🗑️ Removendo estado vazio da gallery');
                 gallery.innerHTML = ''; // Remove estado vazio
             }
             
             // Cria elemento da nova imagem
+            console.log('🏗️ Criando novo elemento de imagem...');
             const imageDiv = document.createElement('div');
             imageDiv.className = 'group relative bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200';
             imageDiv.innerHTML = `
                 <div class="aspect-square overflow-hidden rounded-t-lg bg-gray-100">
                     <img src="${imageData.src}" 
                          alt="${imageData.name}"
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                         onload="console.log('🖼️ Imagem carregada:', '${imageData.name}')"
+                         onerror="console.error('❌ Erro ao carregar imagem:', '${imageData.name}')">
                 </div>
                 <div class="p-3">
                     <p class="text-xs font-medium text-gray-900 truncate mb-1">${imageData.name}</p>
@@ -1558,7 +1612,18 @@
             `;
             
             // Adiciona ao início da galeria
-            gallery.insertBefore(imageDiv, gallery.firstChild);
+            try {
+                if (gallery.firstChild) {
+                    gallery.insertBefore(imageDiv, gallery.firstChild);
+                    console.log('✅ Imagem inserida no início da gallery');
+                } else {
+                    gallery.appendChild(imageDiv);
+                    console.log('✅ Imagem adicionada como primeira da gallery');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao inserir imagem na gallery:', error);
+                return;
+            }
             
             // Atualiza contador no modal
             const counterElement = gallery.parentElement.querySelector('h4');
@@ -1568,6 +1633,9 @@
                     <i class="fas fa-folder-open mr-2"></i>
                     Imagens Atuais (${currentImages})
                 `;
+                console.log(`🔢 Contador atualizado: ${currentImages} imagens`);
+            } else {
+                console.warn('⚠️ Elemento contador (h4) não encontrado');
             }
             
             console.log(`✅ Imagem "${imageData.name}" adicionada à galeria do modal`);
@@ -1661,6 +1729,8 @@
                 // Converte para base64 como fallback
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    console.log('📁 PROCESSANDO FALLBACK localStorage...');
+                    
                     const imageData = {
                         id: 'local_' + Date.now(),
                         name: file.name,
@@ -1668,16 +1738,36 @@
                         cloudinary: false,
                         size: file.size,
                         created: new Date().toISOString()
-                    };
+                                        };
                     
+                    console.log('💾 Dados da imagem criados:', {
+                        id: imageData.id,
+                        name: imageData.name,
+                        size: imageData.size,
+                        srcLength: imageData.src.length,
+                        srcPreview: imageData.src.substring(0, 100) + '...'
+                    });
+                    
+                    // Salva no produto
                     addImageToProduct(productId, imageData);
+                    console.log('✅ Imagem adicionada ao produto:', productId);
+                    
                     showSuccessMessage(`📁 Imagem "${file.name}" salva localmente (backup)`);
                     
-                    // Atualiza modal se estiver aberto
+                    // Atualiza modal - sempre tenta (modal existe se chegou aqui)
                     const modal = document.getElementById('imageModal');
-                    if (modal && !modal.classList.contains('hidden')) {
+                    console.log('🔍 Modal encontrado:', !!modal);
+                    
+                    if (modal) {
                         addImageToGallery(imageData, productId);
+                        console.log('🎨 addImageToGallery chamada');
+                    } else {
+                        console.warn('⚠️ Modal não encontrado - imagem salva mas não mostrada');
                     }
+                    
+                    // Force update da lista de produtos
+                    renderProducts();
+                    console.log('🔄 Lista de produtos atualizada');
                 };
                 reader.readAsDataURL(file);
                 return true;
@@ -1729,10 +1819,53 @@
             }
         }
         
+        // ============= FUNÇÃO DEBUG v3.2 =============
+        function debugProductImages() {
+            console.log('🔍 DEBUG: Estado completo dos produtos e imagens');
+            console.log('======================================');
+            
+            const products = APP_STATE.products;
+            console.log('📊 Total de produtos:', products.length);
+            
+            products.forEach((product, index) => {
+                console.log(`\n📦 Produto ${index + 1}: ${product.name} (ID: ${product.id})`);
+                console.log('   ├─ Tem imagens:', !!product.images);
+                console.log('   ├─ Quantidade imagens:', product.images?.length || 0);
+                console.log('   ├─ Primary src:', !!product.primarySrc);
+                
+                if (product.images && product.images.length > 0) {
+                    product.images.forEach((img, imgIndex) => {
+                        console.log(`   └─ Imagem ${imgIndex + 1}:`);
+                        console.log(`      ├─ Nome: ${img.name}`);
+                        console.log(`      ├─ ID: ${img.id}`);
+                        console.log(`      ├─ Cloudinary: ${img.cloudinary}`);
+                        console.log(`      ├─ Tamanho src: ${img.src?.length || 0} chars`);
+                        console.log(`      └─ Criada: ${img.created}`);
+                    });
+                } else {
+                    console.log('   └─ Nenhuma imagem');
+                }
+            });
+            
+            // Verificar localStorage
+            const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+            if (stored) {
+                const storedProducts = JSON.parse(stored);
+                console.log('\n💾 localStorage verification:');
+                console.log('   ├─ Produtos no storage:', storedProducts.length);
+                console.log('   └─ Tamanho total:', (stored.length / 1024).toFixed(2), 'KB');
+            } else {
+                console.error('❌ Nenhum dado encontrado no localStorage!');
+            }
+            
+            return { products, stored: stored ? JSON.parse(stored) : null };
+        }
+        
         // ============= EXPOSIÇÃO GLOBAL v3.2 =============
         window.openImageUpload = openImageUpload;
         window.migrateToCloudinary = migrateToCloudinary;
         window.uploadToCloudinary = uploadToCloudinary; // Nova função API direta
+        window.debugProductImages = debugProductImages; // Função debug
         
         // ==========================================
         // INICIALIZAÇÃO DA APLICAÇÃO
